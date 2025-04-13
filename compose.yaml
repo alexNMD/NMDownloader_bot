@@ -1,0 +1,48 @@
+services:
+  redis:
+    image: redis:latest
+    container_name: redis-container
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - app-network
+
+  discord:
+    image: nmd_downloader
+    container_name: discord
+    restart: unless-stopped
+    command: ["python", "discord_app.py"]
+    networks:
+      - app-network
+
+  celery:
+    image: nmd_downloader
+    container_name: celery
+    restart: unless-stopped
+    command: ["celery", "--app", "celery_app", "worker"]
+    volumes:
+      - /media/Armoire/Plex:/media/Armoire/Plex
+    networks:
+      - app-network
+    environment:
+      - C_FORCE_ROOT="true"
+
+  flower:
+    image: nmd_downloader
+    container_name: flower
+    restart: unless-stopped
+    ports:
+      - "5555:5555"
+    command: ["celery", "--app", "celery_app", "flower"]
+    networks:
+      - app-network
+
+volumes:
+  redis-data:
+
+networks:
+  app-network:
+    driver: bridge
