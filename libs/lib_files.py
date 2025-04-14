@@ -36,10 +36,11 @@ def dest_file_exists(src_file_path: str) -> bool:
     _filename = os.path.basename(src_file_path)
     _base_directory = os.path.dirname(src_file_path)
 
-    if match := __match(_filename):
+    if series := __match(_filename):
         return os.path.isfile(
-            os.path.join(_base_directory, __get_sub_directory(match), _filename)
+            os.path.join(_base_directory, __get_sub_directory(series), _filename)
         )
+    return os.path.isfile(src_file_path)
 
 
 def __match(filename: str) -> dict | None:
