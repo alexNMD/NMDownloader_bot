@@ -1,6 +1,6 @@
 import time
 
-BAR_LENGTH = 50
+BAR_LENGTH = 15
 
 
 def get_progress_bar(progress: int, total: int) -> str:
