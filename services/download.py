@@ -20,7 +20,8 @@ class DownloadHandler:
         self.message_id = message_id
         self.channel_id = channel_id
         self.file_name = self._extract_filename(self.url)
-        self.type_dl = "series" if re.search(r'S\d{2}E\d{2}', self.file_name) else "films"  # Ex: S03E15
+        self.type_dl = "series" \
+                        if re.search(r'S\d{2}E\d{2}', self.file_name) else "films"  # Ex: S03E15
         self.base_download_path = f"{NAS_PATH}/{self.type_dl}"
         self.file_path = f"{self.base_download_path}/{self.file_name}"
         self.status_message_id = None
@@ -40,11 +41,14 @@ class DownloadHandler:
 
     @classmethod
     def _extract_filename(cls, url):
-        content_disposition = requests.head(url).headers.get("Content-Disposition")
-        filename_regex = r'filename\*?=(?:UTF-8\'\')?"?([^;\n"]+)"?'
-        match = re.search(filename_regex, content_disposition)
-        if match:
-            return match.group(1)
+        _content_disposition = requests.head(url, timeout=10).headers.get("Content-Disposition")
+        _filename_regex = r'filename\*?=(?:UTF-8\'\')?"?([^;\n"]+)"?'
+
+        if not _content_disposition:
+            raise TypeError('Unable to retreive filename.')
+
+        if _match := re.search(_filename_regex, _content_disposition):
+            return _match.group(1)
         return url.split('/')[-1]
 
     # @classmethod
