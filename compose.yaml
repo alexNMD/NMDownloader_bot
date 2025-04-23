@@ -39,6 +39,8 @@ services:
     command: ["celery", "--app", "celery_app", "flower"]
     networks:
       - app-network
+    environment:
+      - FLOWER_UNAUTHENTICATED_API=true
 
 volumes:
   redis-data:
