@@ -14,42 +14,47 @@ from libs.lib_progressbar import get_progress_bar
 discord_api = DiscordAPI(DISCORD_TOKEN)
 
 
+class DownloadException(Exception):
+    def __init__(self, download, message):
+        super().__init__(message)
+        logger.error(message)
+        download._update_status('Error', message)
+
+
+
 class DownloadHandler:
     def __init__(self, url, message_id, channel_id):
+        self.status_message_id = None
         self.url = url
         self.message_id = message_id
         self.channel_id = channel_id
-        self.file_name = self._extract_filename(self.url)
+        self.file_name = self.__extract_filename()
         self.type_dl = "series" \
                         if re.search(r'S\d{2}E\d{2}', self.file_name) else "films"  # Ex: S03E15
         self.base_download_path = f"{NAS_PATH}/{self.type_dl}"
         self.file_path = f"{self.base_download_path}/{self.file_name}"
-        self.status_message_id = None
 
     def check(self):
         if not os.path.exists(self.base_download_path):
-            _error = f'{self.base_download_path} doesn\'t exists'
-            self.__update_status('Error', _error)
-            raise Exception(_error)
+            error = f'{self.base_download_path} doesn\'t exists'
+            raise DownloadException(self, error)
 
         if dest_file_exists(self.file_path):
-            _error = 'Already exists'
-            self.__update_status('Error', _error)
-            raise Exception(_error)
+            error = 'Already exists'
+            raise DownloadException(self, error)
 
         return True
 
-    @classmethod
-    def _extract_filename(cls, url):
-        _content_disposition = requests.head(url, timeout=10).headers.get("Content-Disposition")
+    def __extract_filename(self):
+        _content_disposition = requests.head(self.url, timeout=10).headers.get("Content-Disposition")
         _filename_regex = r'filename\*?=(?:UTF-8\'\')?"?([^;\n"]+)"?'
 
         if not _content_disposition:
-            raise TypeError('Unable to retreive filename.')
+            raise DownloadException(self, 'Unable to retrieve filename')
 
         if _match := re.search(_filename_regex, _content_disposition):
             return _match.group(1)
-        return url.split('/')[-1]
+        return self.url.split('/')[-1]
 
     # @classmethod
     # def delete_file(cls, download):
@@ -65,24 +70,25 @@ class DownloadHandler:
             os.remove(self.file_path)
             logger.debug(f"file removed: {self.file_path}")
 
-    def __update_status(self, status, additionnal=None):
-        _status_message = f"[{self.type_dl}] Download {status}: {self.file_name}"
+    def _update_status(self, status, additionnal=None):
+        status_message = f"[{self.type_dl}] Download {status}: {self.file_name}" \
+            if hasattr(self, 'type_dl') and hasattr(self, 'file_name') else f"Download {status}"
         if additionnal:
-            _status_message += f"\n{additionnal}"
+            status_message += f"\n{additionnal}"
 
-        logger.debug(_status_message)
+        logger.debug(status_message)
         if self.status_message_id:
             discord_api.edit_message(
                 self.channel_id,
                 self.status_message_id,
-                _status_message
+                status_message
             )
         else:
             self.status_message_id = discord_api.reply_to_message(
-                self.channel_id, self.message_id, _status_message)
+                self.channel_id, self.message_id, status_message)
 
     def __finish(self):
-        self.__update_status('Done')
+        self._update_status('Done')
         if self.type_dl in ['series']:
             self.file_path = organize_episode(self.file_path)
 
@@ -108,7 +114,7 @@ class DownloadHandler:
                     _count_refresh = 0
                     _download_start_time = time.time()
                     with open(self.file_path, 'wb') as file:
-                        self.__update_status('Started')
+                        self._update_status('Started')
                         for chunk in response.iter_content(chunk_size=8192):
                             if not chunk:
                                 break
@@ -119,11 +125,10 @@ class DownloadHandler:
                                 _count_refresh += 1
                                 _download_speed = _downloaded_size / elapsed_time  # bytes
 
-                                self.__update_status(
+                                self._update_status(
                                     "In Progress",
                                     additionnal=self.__compute_progress(_downloaded_size, _total_size, _download_speed)
                                 )
                     self.__finish()
         except Exception as error:
-            logger.error(error)
-            raise Exception(error)
+            raise DownloadException(self, error) from error
