@@ -29,8 +29,16 @@ services:
       - app-network
     environment:
       - C_FORCE_ROOT="true"
+    healthcheck:
+      test: celery --app celery_app status
+      interval: 10s
+      timeout: 10s
+      retries: 10
 
   flower:
+    depends_on:
+      celery:
+        condition: service_healthy
     image: nmd_downloader
     container_name: flower
     restart: unless-stopped
