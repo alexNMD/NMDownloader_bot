@@ -23,7 +23,7 @@ class DownloadHandler:
         self.message_id = message_id
         self.channel_id = channel_id
         try:
-            self.file_name = extract_filename(self)
+            self.file_name = extract_filename(self.url)
         except Exception as error:
             raise DownloadException(self, 'Unable to retrieve filename') from error
         self.type_dl = "series" \
