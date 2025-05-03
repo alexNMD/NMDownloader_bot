@@ -2,33 +2,30 @@ import math
 import os
 import re
 import time
+from urllib.parse import urlparse
 
 import requests
 
-from celery_app import logger
+from apps.celery_app import logger
 from config import NAS_PATH, DISCORD_TOKEN, REFRESH_RATE
-from services.discord import DiscordAPI
+from services.discord_api import DiscordAPI
 from libs.lib_files import organize_episode, dest_file_exists
 from libs.lib_progressbar import get_progress_bar
+from libs.lib_download import compute_url_from_1fichier, DownloadException, extract_filename
 
 discord_api = DiscordAPI(DISCORD_TOKEN)
-
-
-class DownloadException(Exception):
-    def __init__(self, download, message):
-        super().__init__(message)
-        logger.error(message)
-        download._update_status('Error', message)
-
 
 
 class DownloadHandler:
     def __init__(self, url, message_id, channel_id):
         self.status_message_id = None
-        self.url = url
+        self.url = self.__compute_url(url)
         self.message_id = message_id
         self.channel_id = channel_id
-        self.file_name = self.__extract_filename()
+        try:
+            self.file_name = extract_filename(self)
+        except Exception as error:
+            raise DownloadException(self, 'Unable to retrieve filename') from error
         self.type_dl = "series" \
                         if re.search(r'S\d{2}E\d{2}', self.file_name) else "films"  # Ex: S03E15
         self.base_download_path = f"{NAS_PATH}/{self.type_dl}"
@@ -45,16 +42,14 @@ class DownloadHandler:
 
         return True
 
-    def __extract_filename(self):
-        _content_disposition = requests.head(self.url, timeout=10).headers.get("Content-Disposition")
-        _filename_regex = r'filename\*?=(?:UTF-8\'\')?"?([^;\n"]+)"?'
+    @staticmethod
+    def __compute_url(url) -> str:
+        download_providers = {
+            "1fichier.com": compute_url_from_1fichier
+        }
+        _netloc = urlparse(url).netloc
 
-        if not _content_disposition:
-            raise DownloadException(self, 'Unable to retrieve filename')
-
-        if _match := re.search(_filename_regex, _content_disposition):
-            return _match.group(1)
-        return self.url.split('/')[-1]
+        return download_providers.get(_netloc, lambda url:url)(url)
 
     # @classmethod
     # def delete_file(cls, download):

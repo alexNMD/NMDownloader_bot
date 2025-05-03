@@ -14,7 +14,7 @@ services:
     image: nmd_downloader
     container_name: discord
     restart: unless-stopped
-    command: ["python", "discord_app.py"]
+    command: ["python", "apps.discord_app"]
     networks:
       - app-network
 
@@ -22,7 +22,7 @@ services:
     image: nmd_downloader
     container_name: celery
     restart: unless-stopped
-    command: ["celery", "--app", "celery_app", "worker"]
+    command: ["celery", "--app", "apps.celery_app", "worker"]
     volumes:
       - /media/Armoire/Plex:/media/Armoire/Plex
     networks:
@@ -44,7 +44,7 @@ services:
     restart: unless-stopped
     ports:
       - "5555:5555"
-    command: ["celery", "--app", "celery_app", "flower"]
+    command: ["celery", "--app", "apps.celery_app", "flower"]
     networks:
       - app-network
     environment:
