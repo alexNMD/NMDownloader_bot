@@ -87,6 +87,36 @@ class DownloadHandler:
         if self.type_dl in ['series']:
             self.file_path = organize_episode(self.file_path)
 
+    def start(self):
+        try:
+            with (requests.get(self.url, stream=True, timeout=3600) as response):
+                if response.ok:
+                    _total_size = int(response.headers.get('Content-Length', 0))
+                    _downloaded_size = 0
+                    _count_refresh = 0
+                    _download_start_time = time.time()
+                    with open(self.file_path, 'wb') as file:
+                        self._update_status('Started')
+                        for chunk in response.iter_content(chunk_size=8192):
+                            if chunk:
+                                file.write(chunk)
+                                _downloaded_size += len(chunk)  # bytes
+                                elapsed_time = time.time() - _download_start_time  # seconds
+                                if math.trunc(elapsed_time / REFRESH_RATE) > _count_refresh:
+                                    _count_refresh += 1
+                                    _download_speed = _downloaded_size / elapsed_time  # bytes
+
+                                    self._update_status(
+                                        "In Progress",
+                                        additionnal=self.__compute_progress(
+                                            _downloaded_size, _total_size, _download_speed
+                                        )
+                                    )
+                            break
+                    self.__finish()
+        except Exception as error:
+            raise DownloadException(self, error) from error
+
     @classmethod
     def __compute_progress(cls, progress, total, speed) -> str:
         _remaining_time_seconds = (total - progress) / speed
@@ -99,31 +129,3 @@ class DownloadHandler:
         speed_in_mb = speed / (1024 * 1024)
 
         return f"{progress_bar} [ETA {remaining_time:.0f} {time_unit} @ {speed_in_mb:.2f} MB/s]"
-
-    def start(self):
-        try:
-            with (requests.get(self.url, stream=True, timeout=3600) as response):
-                if response.ok:
-                    _total_size = int(response.headers.get('Content-Length', 0))
-                    _downloaded_size = 0
-                    _count_refresh = 0
-                    _download_start_time = time.time()
-                    with open(self.file_path, 'wb') as file:
-                        self._update_status('Started')
-                        for chunk in response.iter_content(chunk_size=8192):
-                            if not chunk:
-                                break
-                            file.write(chunk)
-                            _downloaded_size += len(chunk)  # bytes
-                            elapsed_time = time.time() - _download_start_time  # seconds
-                            if math.trunc(elapsed_time / REFRESH_RATE) > _count_refresh:
-                                _count_refresh += 1
-                                _download_speed = _downloaded_size / elapsed_time  # bytes
-
-                                self._update_status(
-                                    "In Progress",
-                                    additionnal=self.__compute_progress(_downloaded_size, _total_size, _download_speed)
-                                )
-                    self.__finish()
-        except Exception as error:
-            raise DownloadException(self, error) from error
