@@ -47,7 +47,8 @@ class DiscordAPI:
             "content": content
         }
         response = requests.post(url, headers=self.headers, json=data, timeout=10)
-        return response.json()
+        response_json = response.json()
+        return response_json.get('id')
 
     def edit_message(self, channel_id, message_id, new_content):
         """

@@ -11,7 +11,11 @@ from config import NAS_PATH, DISCORD_TOKEN, REFRESH_RATE, BOT_MESSAGES_CHANNEL_I
 from services.discord_api import DiscordAPI
 from libs.lib_files import organize_episode, dest_file_exists
 from libs.lib_progressbar import get_progress_bar
-from libs.lib_download import compute_url_from_1fichier, DownloadException, extract_filename
+from libs.lib_download import (
+    compute_url_from_1fichier,
+    extract_filename,
+    DownloadException
+)
 
 discord_api = DiscordAPI(DISCORD_TOKEN)
 
@@ -102,18 +106,17 @@ class DownloadHandler:
                 message
             )
             return
-        if self.message_id:
-            self.status_message_id = discord_api.reply_to_message(
+
+        self.status_message_id = discord_api.send_message(
+                self.channel_id,
+                message
+        ) if self.message_id \
+        else \
+            discord_api.reply_to_message(
                 self.channel_id,
                 self.message_id,
                 message
             )
-            return
-
-        discord_api.send_message(
-                self.channel_id,
-                message
-        )
 
     def __update_task_meta(self, additionnal=None) -> None:
         _additionnal = additionnal if isinstance(additionnal, dict) else {}
@@ -126,7 +129,7 @@ class DownloadHandler:
                 ),
                 **_additionnal
             }
-            
+
         self.task.update_state(
             state='IN_PROGRESS',
             meta=meta
