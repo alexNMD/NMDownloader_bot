@@ -49,7 +49,7 @@ services:
       - app-network
     environment:
       - FLOWER_UNAUTHENTICATED_API=true
-      - FLOWER_URL_PREFIX='/flower'
+      - FLOWER_URL_PREFIX=flower
 
   flask:
     depends_on:
