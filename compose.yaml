@@ -14,7 +14,7 @@ services:
     image: nmd_downloader
     container_name: discord
     restart: unless-stopped
-    command: ["python", "apps.discord_app"]
+    command: ["python", "-m", "apps.discord_app"]
     networks:
       - app-network
 
