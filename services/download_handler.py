@@ -107,16 +107,17 @@ class DownloadHandler:
             )
             return
 
-        self.status_message_id = discord_api.send_message(
-                self.channel_id,
-                message
-        ) if self.message_id \
-        else \
-            discord_api.reply_to_message(
+        self.status_message_id = discord_api.reply_to_message(
                 self.channel_id,
                 self.message_id,
                 message
-            )
+            ) if self.message_id \
+                else \
+                    discord_api.send_message(
+                        self.channel_id,
+                        message
+                    )
+
 
     def __update_task_meta(self, additionnal=None) -> None:
         _additionnal = additionnal if isinstance(additionnal, dict) else {}
