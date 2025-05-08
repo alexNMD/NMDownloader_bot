@@ -60,7 +60,7 @@ services:
     restart: unless-stopped
     ports:
       - "5000:5000"
-    command: ["flask", "--app", "apps.flask_app", "run"]
+    command: ["flask", "--app", "apps.flask_app", "run", "--host=0.0.0.0"]
     networks:
       - app-network
 
