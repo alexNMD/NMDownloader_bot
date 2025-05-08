@@ -49,6 +49,20 @@ services:
       - app-network
     environment:
       - FLOWER_UNAUTHENTICATED_API=true
+      - FLOWER_URL_PREFIX='/flower'
+
+  flask:
+    depends_on:
+      celery:
+        condition: service_healthy
+    image: nmd_downloader
+    container_name: flask
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    command: ["flask", "--app", "apps.flask_app", "run"]
+    networks:
+      - app-network
 
 volumes:
   redis-data:
