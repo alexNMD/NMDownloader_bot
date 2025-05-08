@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 import requests
 
 from apps.celery_app import logger
-from config import NAS_PATH, DISCORD_TOKEN, REFRESH_RATE
+from config import NAS_PATH, DISCORD_TOKEN, REFRESH_RATE, BOT_MESSAGES_CHANNEL_ID
 from services.discord_api import DiscordAPI
 from libs.lib_files import organize_episode, dest_file_exists
 from libs.lib_progressbar import get_progress_bar
@@ -17,11 +17,11 @@ discord_api = DiscordAPI(DISCORD_TOKEN)
 
 
 class DownloadHandler:
-    def __init__(self, url, message_id, channel_id, task):
+    def __init__(self, url, task, message_id=None, channel_id=None):
         self.status_message_id = None
         self.url = self.__compute_url(url)
         self.message_id = message_id
-        self.channel_id = channel_id
+        self.channel_id = channel_id or BOT_MESSAGES_CHANNEL_ID
         try:
             self.file_name = extract_filename(self.url)
         except Exception as error:
@@ -101,9 +101,19 @@ class DownloadHandler:
                 self.status_message_id,
                 message
             )
-        else:
+            return
+        if self.message_id:
             self.status_message_id = discord_api.reply_to_message(
-                self.channel_id, self.message_id, message)
+                self.channel_id,
+                self.message_id,
+                message
+            )
+            return
+
+        discord_api.send_message(
+                self.channel_id,
+                message
+        )
 
     def __update_task_meta(self, additionnal=None) -> None:
         _additionnal = additionnal if isinstance(additionnal, dict) else {}
