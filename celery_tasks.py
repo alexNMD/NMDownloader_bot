@@ -3,14 +3,13 @@ from services.download_handler import DownloadHandler
 
 @app.task(bind=True)
 def download_task(self, url, message_id, channel_id) -> dict:
-    download = DownloadHandler(url, message_id, channel_id)
-    download.check()
+    download = DownloadHandler(url, message_id, channel_id, task=self)
 
-    self.update_state(
-        state='PROGRESS',
-        meta=download.__dict__
-    )
+    download.check()
 
     download.start()
 
-    return download.__dict__
+    return dict(
+        file_name=download.file_name,
+        file_path=download.file_path
+    )
