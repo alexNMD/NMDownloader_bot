@@ -4,7 +4,7 @@ from celery import Celery
 
 from config import BROKER_URL, BACKEND_URL, LIMIT, LOG_LEVEL
 
-app = Celery(
+celery_app = Celery(
     'tasks',
     broker=BROKER_URL,
     backend=BACKEND_URL,
