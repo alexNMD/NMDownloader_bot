@@ -26,6 +26,7 @@ logging.basicConfig(
     style='{'
 )
 
-BROKER_URL = "redis://redis:6379/0"
-BACKEND_URL = "redis://redis:6379/0"
-BASE_URL_1FICHIER  = 'https://api.1fichier.com/v1'
+BROKER_URL = os.getenv("BROKER_URL")
+BACKEND_URL = os.getenv("BACKEND_URL")
+
+BASE_URL_1FICHIER  = os.getenv("BASE_URL_1FICHIER")
