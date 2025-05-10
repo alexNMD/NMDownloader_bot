@@ -1,3 +1,3 @@
 """Tasks"""
 
-__import__('download_tasks')
+__import__('tasks.download_tasks')

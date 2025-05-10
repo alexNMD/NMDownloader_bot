@@ -25,6 +25,8 @@ logging.basicConfig(
     format='[{asctime}] [{levelname}] : {message}',
     style='{'
 )
+gunicorn_logger = logging.getLogger('gunicorn.error')
+gunicorn_logger.setLevel(LOG_LEVEL)
 
 BROKER_URL = os.getenv("BROKER_URL")
 BACKEND_URL = os.getenv("BACKEND_URL")
