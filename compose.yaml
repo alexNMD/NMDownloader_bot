@@ -24,7 +24,7 @@ services:
     restart: unless-stopped
     command: ["celery", "--app", "apps.celery_app", "worker"]
     volumes:
-      - /media/Armoire/Plex:/media/Armoire/Plex
+      - ${DOWNLOAD_PATH}:${DOWNLOAD_PATH}
     networks:
       - app-network
     environment:
