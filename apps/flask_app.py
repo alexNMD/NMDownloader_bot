@@ -6,7 +6,8 @@ from routes import register_routes
 
 flask_app = Flask(__name__)
 
-logger = logging.getLogger('celery')
-logger.setLevel(LOG_LEVEL)
+gunicorn_logger = logging.getLogger('gunicorn.error')
+flask_app.logger.handlers = gunicorn_logger.handlers
+flask_app.logger.setLevel(LOG_LEVEL)
 
 register_routes(flask_app)
