@@ -60,7 +60,7 @@ services:
     restart: unless-stopped
     ports:
       - "5000:5000"
-    command: ["flask", "--app", "apps.flask_app", "run", "--host=0.0.0.0"]
+    command: ["gunicorn", "--workers", "${CONCURRENCY}", "--bind", "0.0.0.0", "apps.flask_app:flask_app", "--log-level", "${LOG_LEVEL}"]
     networks:
       - app-network
 
