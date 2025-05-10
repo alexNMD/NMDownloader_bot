@@ -1,7 +1,7 @@
 from discord.ext import commands
 
 from config import logger
-from celery_tasks import download_task
+from tasks.download_tasks import download_task
 
 class Download(commands.Cog):
     def __init__(self, bot):

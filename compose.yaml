@@ -24,7 +24,7 @@ services:
     restart: unless-stopped
     command: ["celery", "--app", "apps.celery_app", "worker"]
     volumes:
-      - /media/Armoire/Plex:/media/Armoire/Plex
+      - ${DOWNLOAD_PATH}:${DOWNLOAD_PATH}
     networks:
       - app-network
     environment:
@@ -59,8 +59,15 @@ services:
     container_name: flask
     restart: unless-stopped
     ports:
-      - "5000:5000"
-    command: ["flask", "--app", "apps.flask_app", "run", "--host=0.0.0.0"]
+      - "8000:8000"
+    command: [
+      "gunicorn",
+      "--workers", "${CONCURRENCY:-2}",
+      "--bind", "0.0.0.0",
+      "apps.flask_app:flask_app",
+      "--access-logfile", "-",
+      "--error-logfile", "-",
+      "--log-level", "${LOG_LEVEL:-INFO}"]
     networks:
       - app-network
 
