@@ -25,8 +25,6 @@ def launch() -> dict[str, object]:
 @download_bp.get("/<uuid>")
 def status(uuid) -> dict[str, object]:
     download_meta = get_download_task(uuid, json_readable=True)
-    if not isinstance(download_meta['download'], DownloadHandler):
-        return jsonify(dict(message='Unable to retrieve download')), 400
 
     return jsonify(download_meta)
 

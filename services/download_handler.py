@@ -10,7 +10,11 @@ import requests
 from apps.celery_app import logger
 from config import NAS_PATH, DISCORD_TOKEN, REFRESH_RATE, BOT_MESSAGES_CHANNEL_ID
 from services.discord_api import DiscordAPI
-from libs.lib_files import organize_episode, dest_file_exists
+from libs.lib_files import (
+    organize_episode,
+    dest_file_exists,
+    is_json_serializable
+)
 from libs.lib_progressbar import get_progress_bar
 from libs.lib_download import (
     compute_url_from_1fichier,
@@ -90,6 +94,9 @@ class DownloadHandler:
         self._update_status(
             "Canceled"
         )
+
+    def to_dict(self):
+        return {key: value for key, value in self.__dict__.items() if is_json_serializable(value)}
 
     def _update_status(self, status, additionnal=None, meta_data=None) -> None:
         status_message = f"[{self.type_dl}] Download {status}: {self.file_name}" \

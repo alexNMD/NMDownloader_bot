@@ -22,7 +22,7 @@ def get_download_task(task_id: str, json_readable=False):
         download = str(result.info)
 
     download_meta = dict(
-        download=download.__dict__ if json_readable else download,
+        download=download.to_dict() if json_readable else download,
         stats=result.info.get('stats', {})
     )
 

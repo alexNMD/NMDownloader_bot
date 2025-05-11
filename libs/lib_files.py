@@ -3,6 +3,7 @@ import os
 import re
 import shutil
 import sys
+import json
 from typing import LiteralString
 
 logger = logging.getLogger('celery')
@@ -81,3 +82,10 @@ if __name__ == "__main__":
         sys.exit(1)
 
     organize_series(source_directory)
+
+def is_json_serializable(value):
+    try:
+        json.dumps(value)
+        return True
+    except (TypeError, OverflowError):
+        return False
