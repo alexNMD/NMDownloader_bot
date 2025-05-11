@@ -1,7 +1,9 @@
+import pickle
 from celery.result import AsyncResult
 
 from apps.celery_app import celery_app
 from config import logger
+from services.download_handler import DownloadHandler
 
 def get_task_result(task_id: str) -> dict:
     result = AsyncResult(task_id, app=celery_app)
@@ -11,6 +13,15 @@ def get_task_result(task_id: str) -> dict:
         status=result.status,
         meta=meta_info
     )
+
+def get_download_task(task_id: str) -> DownloadHandler:
+    result = AsyncResult(task_id, app=celery_app)
+    try:
+        download = pickle.loads(result.info)
+    except TypeError:
+        download = str(result.info)
+
+    return download
 
 def revoke_task(task_id: str) -> None:
     celery_app.control.revoke(task_id=task_id, terminate=True)

@@ -1,8 +1,8 @@
 from flask import request, Blueprint, jsonify
 
-from libs.lib_task import get_task_result, revoke_task
-from tasks.download_tasks import download_task
+from libs.lib_task import get_download_task, revoke_task
 from services.download_handler import DownloadHandler
+from tasks.download_tasks import download_task
 from config import gunicorn_logger
 
 download_bp = Blueprint("download", __name__, url_prefix="/download")
@@ -22,13 +22,21 @@ def launch() -> dict[str, object]:
         dict(uuid=task.id)
     )
 
+@download_bp.get("/<uuid>")
+def status(uuid) -> dict[str, object]:
+    download = get_download_task(uuid)
+    if not isinstance(download, DownloadHandler):
+        return jsonify(dict(message='Unable to retrieve download')), 400
+
+    return jsonify(
+        download.__dict__
+    )
+
 @download_bp.delete("/<uuid>")
 def stop(uuid) -> dict[str, object]:
-    result_dict = get_task_result(uuid)
-    if not isinstance(result_dict['meta'], dict):
-        return jsonify(dict(message='Unable to retrieve file path')), 400
-    if not (download := result_dict.get('meta', {}).get('download')):
-        return jsonify(dict(message='Unable to retrieve file path')), 400
+    download = get_download_task(uuid)
+    if not isinstance(download, DownloadHandler):
+        return jsonify(dict(message='Unable to retrieve download')), 400
 
     revoke_task(uuid)
     download.cancel()
