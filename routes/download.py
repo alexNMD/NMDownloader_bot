@@ -31,7 +31,7 @@ def status(uuid) -> dict[str, object]:
 @download_bp.delete("/<uuid>")
 def stop(uuid) -> dict[str, object]:
     download_meta = get_download_task(uuid)
-    if not isinstance(download_meta['download'], DownloadHandler):
+    if not isinstance(download_meta.get('download'), DownloadHandler):
         return jsonify(dict(message='Unable to retrieve download')), 400
 
     revoke_task(uuid)
