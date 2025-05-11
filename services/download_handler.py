@@ -126,7 +126,9 @@ class DownloadHandler:
         _additionnal_meta = additionnal_meta if isinstance(additionnal_meta, dict) else {}
         meta = dict(
             download=pickle.dumps(self),
-        ) | _additionnal_meta
+        ) | dict (
+            stats=_additionnal_meta
+        )
 
         self.task.update_state(
             state='IN_PROGRESS',

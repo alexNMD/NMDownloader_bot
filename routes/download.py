@@ -24,22 +24,20 @@ def launch() -> dict[str, object]:
 
 @download_bp.get("/<uuid>")
 def status(uuid) -> dict[str, object]:
-    download = get_download_task(uuid)
-    if not isinstance(download, DownloadHandler):
+    download_meta = get_download_task(uuid, json_readable=True)
+    if not isinstance(download_meta['download'], DownloadHandler):
         return jsonify(dict(message='Unable to retrieve download')), 400
 
-    return jsonify(
-        download.__dict__
-    )
+    return jsonify(download_meta)
 
 @download_bp.delete("/<uuid>")
 def stop(uuid) -> dict[str, object]:
-    download = get_download_task(uuid)
-    if not isinstance(download, DownloadHandler):
+    download_meta = get_download_task(uuid)
+    if not isinstance(download_meta['download'], DownloadHandler):
         return jsonify(dict(message='Unable to retrieve download')), 400
 
     revoke_task(uuid)
-    download.cancel()
+    download_meta['download'].cancel()
 
     return jsonify(
         dict(message="Download stopped")

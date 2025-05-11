@@ -14,14 +14,19 @@ def get_task_result(task_id: str) -> dict:
         meta=meta_info
     )
 
-def get_download_task(task_id: str) -> DownloadHandler:
+def get_download_task(task_id: str, json_readable=False):
     result = AsyncResult(task_id, app=celery_app)
     try:
-        download = pickle.loads(result.info)
+        download = pickle.loads(result.info['download'])
     except TypeError:
         download = str(result.info)
 
-    return download
+    download_meta = dict(
+        download=download.__dict__ if json_readable else download,
+        stats=result.info.get('stats', {})
+    )
+
+    return download_meta
 
 def revoke_task(task_id: str) -> None:
     celery_app.control.revoke(task_id=task_id, terminate=True)
