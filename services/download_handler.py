@@ -2,6 +2,7 @@ import math
 import os
 import re
 import time
+import pickle
 from urllib.parse import urlparse
 
 import requests
@@ -74,7 +75,6 @@ class DownloadHandler:
                                     additionnal=self.__compute_progress(_downloaded_size, self.total_size, _download_speed),
                                     meta_data=dict(
                                         progress=_downloaded_size,
-                                        total=self.total_size,
                                         speed=_download_speed
                                     )
                                 )
@@ -83,10 +83,13 @@ class DownloadHandler:
         except Exception as error:
             raise DownloadException(self, error) from error
 
-    def remove_file(self):
+    def cancel(self):
         if os.path.exists(self.file_path):
             os.remove(self.file_path)
-            logger.debug(f"file removed: {self.file_path}")
+            logger.info(f"file removed: {self.file_path}")
+        self._update_status(
+            "Canceled"
+        )
 
     def _update_status(self, status, additionnal=None, meta_data=None) -> None:
         status_message = f"[{self.type_dl}] Download {status}: {self.file_name}" \
@@ -119,17 +122,11 @@ class DownloadHandler:
                     )
 
 
-    def __update_task_meta(self, additionnal=None) -> None:
-        _additionnal = additionnal if isinstance(additionnal, dict) else {}
-        meta = {
-                **dict(
-                    url=self.url,
-                    filename=self.file_name,
-                    filepath=self.file_path,
-                    type=self.type_dl
-                ),
-                **_additionnal
-            }
+    def __update_task_meta(self, additionnal_meta=None) -> None:
+        _additionnal_meta = additionnal_meta if isinstance(additionnal_meta, dict) else {}
+        meta = dict(
+            download=pickle.dumps(self),
+        ) | _additionnal_meta
 
         self.task.update_state(
             state='IN_PROGRESS',
