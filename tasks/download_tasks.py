@@ -16,4 +16,6 @@ def download_task(self, url, message_id=None, channel_id=None) -> dict:
 
     download.start()
 
-    return pickle.dumps(download)
+    return dict(
+        download=pickle.dumps(download)
+    )
