@@ -66,7 +66,7 @@ class DownloadHandler:
                     _count_refresh = 0
                     _download_start_time = time.time()
                     with open(self.file_path, 'wb') as file:
-                        self._update_status(DownloadStatus.RUNNING)
+                        self._update_status(DownloadStatus.STARTED)
                         # start read file
                         for chunk in response.iter_content(chunk_size=8192):
                             if not chunk:
@@ -114,23 +114,30 @@ class DownloadHandler:
     def __do_notification(self, status: DownloadStatus, title, content) -> None:
         logger.debug(title, content)
 
-        if not self.status_message_id:
-            self.status_message_id = discord_api.send_embed(
+        if self.status_message_id:
+            discord_api.edit_embed(
                 self.channel_id,
+                self.status_message_id,
                 title,
                 content,
                 status.value
             )
             return
 
-        message_id = self.status_message_id or self.message_id
         self.status_message_id = discord_api.reply_with_embed(
                 self.channel_id,
-                message_id,
+                self.message_id,
                 title,
                 content,
                 status.value
-        )
+            ) if self.message_id \
+                else \
+                    discord_api.send_embed(
+                        self.channel_id,
+                        title,
+                        content,
+                        status.value
+                    )
 
 
     def __update_task_meta(self, additionnal_meta=None) -> None:
