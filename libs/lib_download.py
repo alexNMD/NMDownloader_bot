@@ -3,6 +3,8 @@ from enum import Enum
 
 import requests
 
+from celery.exceptions import Ignore
+
 from config import logger, DOWNLOAD_TOKEN, BASE_URL_1FICHIER
 
 class DownloadStatus(Enum):
@@ -18,7 +20,7 @@ class DownloadException(Exception):
         logger.error(message)
         download._update_status(DownloadStatus.ERROR, message)
 
-class DownloadRevokeException(Exception):
+class DownloadRevokeException(Ignore):
     def __init__(self, download, message="Canceled by User"):
         super().__init__(message)
         logger.info('Download Canceled')

@@ -99,10 +99,12 @@ class DownloadHandler:
 
         raise DownloadRevokeException(self)
 
-
-
     def to_dict(self):
-        return {key: value for key, value in self.__dict__.items() if is_json_serializable(value)}
+        return {
+            key: value
+            for key, value in self.__dict__.items()
+            if is_json_serializable(value)
+        }
 
     def _update_status(self,
                        status: DownloadStatus,
@@ -152,10 +154,7 @@ class DownloadHandler:
             stats=_additionnal_meta
         )
 
-        self.task.update_state(
-            state='IN_PROGRESS',
-            meta=meta
-        )
+        self.task.update_state(meta=meta)
 
     def __finish(self) -> None:
         if is_compressed(self.file_path):
