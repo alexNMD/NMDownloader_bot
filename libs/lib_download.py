@@ -6,10 +6,10 @@ import requests
 from config import logger, DOWNLOAD_TOKEN, BASE_URL_1FICHIER
 
 class DownloadStatus(Enum):
-    RUNNING = 'e8f30b'
-    DONE = '0dba2f'
-    ERROR = 'f63106'
-    CANCELED = '510666'
+    RUNNING = int('e8f30b', 16)
+    DONE = int('0dba2f', 16)
+    ERROR = int('f63106', 16)
+    CANCELED = int('510666', 16)
 
 class DownloadException(Exception):
     def __init__(self, download, message):
