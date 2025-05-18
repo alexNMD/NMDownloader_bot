@@ -18,6 +18,11 @@ class DownloadException(Exception):
         logger.error(message)
         download._update_status(DownloadStatus.ERROR, message)
 
+class DownloadRevokeException(DownloadException):
+    def __init__(self, download, message="Canceled by User"):
+        super().__init__(download, message)
+        download._update_status(DownloadStatus.CANCELED, message)
+
 def compute_url_from_1fichier(link):
     _url = link.split("&")[0]
     token_response = requests.post(

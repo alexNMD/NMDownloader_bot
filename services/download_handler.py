@@ -22,6 +22,7 @@ from libs.lib_download import (
     compute_url_from_1fichier,
     extract_filename,
     DownloadException,
+    DownloadRevokeException,
     DownloadStatus
 )
 
@@ -48,12 +49,10 @@ class DownloadHandler:
 
     def check(self):
         if not os.path.exists(self.base_download_path):
-            error = f'{self.base_download_path} doesn\'t exists'
-            raise DownloadException(self, error)
+            raise DownloadException(self, f'{self.base_download_path} doesn\'t exists')
 
         if dest_file_exists(self.file_path):
-            error = 'Already exists'
-            raise DownloadException(self, error)
+            raise DownloadException(self, 'Already exists')
 
         return True
 
@@ -94,14 +93,14 @@ class DownloadHandler:
             raise DownloadException(self, error) from error
 
     def cancel(self):
-        self.task.revoke(terminate=True)
-        logger.info(f'Task Revoked')
         if os.path.exists(self.file_path):
             os.remove(self.file_path)
             logger.info(f"file removed: {self.file_path}")
-        self._update_status(
-            DownloadStatus.CANCELED
-        )
+
+        logger.info('Download Canceled')
+        raise DownloadRevokeException(self)
+
+
 
     def to_dict(self):
         return {key: value for key, value in self.__dict__.items() if is_json_serializable(value)}

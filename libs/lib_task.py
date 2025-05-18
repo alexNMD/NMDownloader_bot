@@ -2,7 +2,6 @@ import pickle
 from celery.result import AsyncResult
 
 from apps.celery_app import celery_app
-from config import logger
 from services.download_handler import DownloadHandler
 
 def get_task_result(task_id: str) -> dict:
