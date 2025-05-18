@@ -97,7 +97,6 @@ class DownloadHandler:
             os.remove(self.file_path)
             logger.info(f"file removed: {self.file_path}")
 
-        logger.info('Download Canceled')
         raise DownloadRevokeException(self)
 
 
