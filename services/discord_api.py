@@ -33,7 +33,8 @@ class DiscordAPI:
         }
 
         response = requests.post(url, headers=self.headers, json=data, timeout=10)
-        return response.json()
+        response_json = response.json()
+        return response_json.get('id')
 
     def send_embed(self, channel_id, title, description, color):
         """
@@ -57,7 +58,8 @@ class DiscordAPI:
         }
 
         response = requests.post(url, headers=self.headers, json=data, timeout=10)
-        return response.json()
+        response_json = response.json()
+        return response_json.get('id')
 
     def edit_embed(self, channel_id, message_id, title=None, description=None, color=None):
         """
