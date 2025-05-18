@@ -100,7 +100,7 @@ class DownloadHandler:
 
     def _update_status(self, status, additionnal=None, meta_data=None) -> None:
         status_message = f"[{self.type_dl}] Download {status}: {self.file_name}" \
-            if hasattr(self, 'type_dl') and hasattr(self, 'file_name') else f"Download {status}"
+            if (self.type_dl and self.file_name) else f"Download {status}"
         if additionnal:
             status_message += f"\n{additionnal}"
 
