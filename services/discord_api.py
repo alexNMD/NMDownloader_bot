@@ -20,7 +20,7 @@ class DiscordAPI:
         :param color: La couleur de l'embed (en hexadécimal).
         :return: La réponse de l'API Discord.
         """
-        url = f"{self.base_url}/channels/{channel_id}/messages/{message_id}/replies"
+        url = f"{self.base_url}/channels/{channel_id}/messages"
 
         embed = {
             "title": title,
@@ -29,7 +29,10 @@ class DiscordAPI:
         }
 
         data = {
-            "embeds": [embed]
+            "embeds": [embed],
+            "message_reference": {
+                "message_id": message_id
+            }
         }
 
         response = requests.post(url, headers=self.headers, json=data, timeout=10)
