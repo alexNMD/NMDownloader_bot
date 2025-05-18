@@ -21,11 +21,11 @@ from libs.lib_progressbar import get_progress_bar
 from libs.lib_download import (
     compute_url_from_1fichier,
     extract_filename,
-    DownloadException
+    DownloadException,
+    DownloadStatus
 )
 
 discord_api = DiscordAPI(DISCORD_TOKEN)
-
 
 class DownloadHandler:
     def __init__(self, url, task, message_id=None, channel_id=None):
@@ -66,7 +66,7 @@ class DownloadHandler:
                     _count_refresh = 0
                     _download_start_time = time.time()
                     with open(self.file_path, 'wb') as file:
-                        self._update_status('Started')
+                        self._update_status(DownloadStatus.RUNNING)
                         # start read file
                         for chunk in response.iter_content(chunk_size=8192):
                             if not chunk:
@@ -79,7 +79,7 @@ class DownloadHandler:
                                 _download_speed = _downloaded_size / elapsed_time  # bytes
 
                                 self._update_status(
-                                    "In Progress",
+                                    DownloadStatus.RUNNING,
                                     additionnal=self.__compute_progress(
                                         _downloaded_size, self.total_size, _download_speed
                                     ),
@@ -98,41 +98,39 @@ class DownloadHandler:
             os.remove(self.file_path)
             logger.info(f"file removed: {self.file_path}")
         self._update_status(
-            "Canceled"
+            DownloadStatus.CANCELED
         )
 
     def to_dict(self):
         return {key: value for key, value in self.__dict__.items() if is_json_serializable(value)}
 
-    def _update_status(self, status, additionnal=None, meta_data=None) -> None:
-        status_message = f"[{self.type_dl}] Download {status}: {self.file_name}" \
+    def _update_status(self, status: DownloadStatus, additionnal=None, meta_data=None) -> None:
+        title = f"[{self.type_dl}] Download {status.name}: {self.file_name}" \
             if (self.type_dl and self.file_name) else f"Download {status}"
-        if additionnal:
-            status_message += f"\n{additionnal}"
 
         self.__update_task_meta(meta_data)
-        self.__do_notification(status_message)
+        self.__do_notification(status, title, additionnal)
 
-    def __do_notification(self, message) -> None:
-        logger.debug(message)
-        if self.status_message_id:
-            discord_api.edit_message(
+    def __do_notification(self, status: DownloadStatus, title, content) -> None:
+        logger.debug(title, content)
+
+        if not self.status_message_id:
+            self.status_message_id = discord_api.send_embed(
                 self.channel_id,
-                self.status_message_id,
-                message
+                title,
+                content,
+                status.value
             )
             return
 
-        self.status_message_id = discord_api.reply_to_message(
+        message_id = self.status_message_id or self.message_id
+        self.status_message_id = discord_api.reply_with_embed(
                 self.channel_id,
-                self.message_id,
-                message
-            ) if self.message_id \
-                else \
-                    discord_api.send_message(
-                        self.channel_id,
-                        message
-                    )
+                message_id,
+                title,
+                content,
+                status.value
+        )
 
 
     def __update_task_meta(self, additionnal_meta=None) -> None:
@@ -150,13 +148,13 @@ class DownloadHandler:
 
     def __finish(self) -> None:
         if is_compressed(self.file_path):
-            self._update_status('Done', additionnal="Extraction in progress...")
+            self._update_status(DownloadStatus.RUNNING, additionnal="Extraction in progress...")
             handle_archive(self.file_path)
         else:
             if self.type_dl in ['series']:
                 self.file_path = organize_episode(self.file_path)
 
-        self._update_status('Done')
+        self._update_status(DownloadStatus.DONE)
         self.finished = True
 
 

@@ -1,14 +1,21 @@
 import re
+from enum import Enum
 
 import requests
 
 from config import logger, DOWNLOAD_TOKEN, BASE_URL_1FICHIER
 
+class DownloadStatus(Enum):
+    RUNNING = 'e8f30b'
+    DONE = '0dba2f'
+    ERROR = 'f63106'
+    CANCELED = '510666'
+
 class DownloadException(Exception):
     def __init__(self, download, message):
         super().__init__(message)
         logger.error(message)
-        download._update_status('Error', message)
+        download._update_status(DownloadStatus.ERROR, message)
 
 def compute_url_from_1fichier(link):
     _url = link.split("&")[0]
