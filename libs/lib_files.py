@@ -72,19 +72,6 @@ def __get_sub_directory(match: dict) -> str:
         _season_formatted
     )
 
-
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python organize_series.py <directory>")
-        sys.exit(1)
-
-    source_directory = sys.argv[1]
-    if not os.path.isdir(source_directory):
-        print(f"Error: {source_directory} is not a valid source_directory")
-        sys.exit(1)
-
-    organize_series(source_directory)
-
 def is_json_serializable(value) -> bool:
     try:
         json.dumps(value)
@@ -108,7 +95,6 @@ def is_compressed(path) -> bool:
 
     return _file_extension in _archive_extensions
 
-
 def handle_archive(directory_path) -> None:
     _list_archive_files_methods = {
             '.zip': list_zip_contents,
@@ -124,11 +110,24 @@ def handle_archive(directory_path) -> None:
     _parent_directory = os.path.dirname(directory_path)
 
     if _list_files_method := _list_archive_files_methods.get(_extension):
-        logger.info('Compressed archive')
+        logger.info('Unpacking Archive')
         _files = _list_files_method(directory_path)
-        shutil.unpack_archive(directory_path)
-        logger.info('Archive unpacked')
+        shutil.unpack_archive(directory_path, _parent_directory)
+        logger.info('Archive Unpacked')
         for file in _files:
             organize_episode(os.path.join(_parent_directory, file))
         os.remove(directory_path)
         logger.info(f'{directory_path} deleted')
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python organize_series.py <directory>")
+        sys.exit(1)
+
+    source_directory = sys.argv[1]
+    if not os.path.isdir(source_directory):
+        print(f"Error: {source_directory} is not a valid source_directory")
+        sys.exit(1)
+
+    organize_series(source_directory)

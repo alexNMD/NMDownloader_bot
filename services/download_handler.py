@@ -38,7 +38,8 @@ class DownloadHandler:
         except Exception as error:
             raise DownloadException(self, 'Unable to retrieve filename') from error
         self.type_dl = "series" \
-                        if re.search(r'S\d{2}E\d{2}', self.file_name) else "films"  # Ex: S03E15
+            if re.search(r'[Ss]\d{1,2}([Ee]\d{1,2})?', self.file_name) \
+            else "films"
         self.base_download_path = f"{NAS_PATH}/{self.type_dl}"
         self.file_path = f"{self.base_download_path}/{self.file_name}"
         self.total_size = None
@@ -149,6 +150,7 @@ class DownloadHandler:
 
     def __finish(self) -> None:
         if is_compressed(self.file_path):
+            self._update_status('Done', additionnal="Extraction in progress...")
             handle_archive(self.file_path)
         else:
             if self.type_dl in ['series']:
