@@ -59,7 +59,7 @@ class DownloadHandler:
 
     def start(self):
         try:
-            with (requests.get(self.url, stream=True, timeout=3600) as response):
+            with requests.get(self.url, stream=True, timeout=3600) as response:
                 if response.ok:
                     self.total_size = int(response.headers.get('Content-Length', 0))
                     _downloaded_size = 0
@@ -104,12 +104,16 @@ class DownloadHandler:
     def to_dict(self):
         return {key: value for key, value in self.__dict__.items() if is_json_serializable(value)}
 
-    def _update_status(self, status: DownloadStatus, additionnal=None, meta_data=None) -> None:
-        title = f"[{self.type_dl}] Download {status.name}: {self.file_name}" \
-            if (self.type_dl and self.file_name) else f"Download {status}"
+    def _update_status(self,
+                       status: DownloadStatus,
+                       additionnal: str=str(), meta_data=None) -> None:
+        title = f"Download {status.name}"
+        _base_content = f'[{self.type_dl}] {self.file_name} \n' \
+            if (self.type_dl and self.file_name) else ''
+        content = _base_content + additionnal
 
         self.__update_task_meta(meta_data)
-        self.__do_notification(status, title, additionnal)
+        self.__do_notification(status, title, content)
 
     def __do_notification(self, status: DownloadStatus, title, content) -> None:
         logger.debug(title, content)
