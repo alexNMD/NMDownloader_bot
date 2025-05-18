@@ -1,3 +1,5 @@
+import pickle
+
 from apps.celery_app import celery_app
 from services.download_handler import DownloadHandler
 
@@ -14,9 +16,4 @@ def download_task(self, url, message_id=None, channel_id=None) -> dict:
 
     download.start()
 
-    return dict(
-        file_name=download.file_name,
-        file_path=download.file_path,
-        total_size=download.total_size,
-        type=download.type_dl
-    )
+    return pickle.dumps(download)

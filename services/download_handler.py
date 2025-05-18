@@ -13,7 +13,9 @@ from services.discord_api import DiscordAPI
 from libs.lib_files import (
     organize_episode,
     dest_file_exists,
-    is_json_serializable
+    is_json_serializable,
+    handle_archive,
+    is_compressed
 )
 from libs.lib_progressbar import get_progress_bar
 from libs.lib_download import (
@@ -41,6 +43,7 @@ class DownloadHandler:
         self.file_path = f"{self.base_download_path}/{self.file_name}"
         self.total_size = None
         self.task = task
+        self.finished = False
 
     def check(self):
         if not os.path.exists(self.base_download_path):
@@ -76,7 +79,9 @@ class DownloadHandler:
 
                                 self._update_status(
                                     "In Progress",
-                                    additionnal=self.__compute_progress(_downloaded_size, self.total_size, _download_speed),
+                                    additionnal=self.__compute_progress(
+                                        _downloaded_size, self.total_size, _download_speed
+                                    ),
                                     meta_data=dict(
                                         progress=_downloaded_size,
                                         speed=_download_speed
@@ -143,9 +148,14 @@ class DownloadHandler:
         )
 
     def __finish(self) -> None:
+        if is_compressed(self.file_path):
+            handle_archive(self.file_path)
+        else:
+            if self.type_dl in ['series']:
+                self.file_path = organize_episode(self.file_path)
+
         self._update_status('Done')
-        if self.type_dl in ['series']:
-            self.file_path = organize_episode(self.file_path)
+        self.finished = True
 
 
     @staticmethod

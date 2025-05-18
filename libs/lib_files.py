@@ -5,6 +5,8 @@ import shutil
 import sys
 import json
 from typing import LiteralString
+import zipfile
+import tarfile
 
 logger = logging.getLogger('celery')
 
@@ -83,9 +85,50 @@ if __name__ == "__main__":
 
     organize_series(source_directory)
 
-def is_json_serializable(value):
+def is_json_serializable(value) -> bool:
     try:
         json.dumps(value)
         return True
     except (TypeError, OverflowError):
         return False
+
+def list_zip_contents(path):
+    with zipfile.ZipFile(path, 'r') as archive:
+        return archive.namelist()
+
+def list_tar_contents(path):
+    with tarfile.open(path, 'r:*') as archive:
+        return archive.getnames()
+
+def is_compressed(path) -> bool:
+    _archive_extensions = [
+        '.zip', '.tar', '.tar.gz', '.tgz', '.tar.bz2', '.tbz', '.tar.xz', '.txz',
+    ]
+    _file_extension = os.path.splitext(path)[1]
+
+    return _file_extension in _archive_extensions
+
+
+def handle_archive(directory_path) -> None:
+    _list_archive_files_methods = {
+            '.zip': list_zip_contents,
+            '.tar': list_tar_contents,
+            '.tar.gz': list_tar_contents,
+            '.tgz': list_tar_contents,
+            '.tar.bz2': list_tar_contents,
+            '.tbz': list_tar_contents,
+            '.tar.xz': list_tar_contents,
+            '.txz': list_tar_contents,
+    }
+    _extension = os.path.splitext(directory_path)[1]
+    _parent_directory = os.path.dirname(directory_path)
+
+    if _list_files_method := _list_archive_files_methods.get(_extension):
+        logger.info('Compressed archive')
+        _files = _list_files_method(directory_path)
+        shutil.unpack_archive(directory_path)
+        logger.info('Archive unpacked')
+        for file in _files:
+            organize_episode(os.path.join(_parent_directory, file))
+        os.remove(directory_path)
+        logger.info(f'{directory_path} deleted')
