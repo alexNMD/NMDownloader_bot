@@ -9,9 +9,15 @@ class Download(commands.Cog):
 
     @commands.command(name="download", aliases=["d"])
     async def handle_download(self, ctx):
+        """ USAGE: send link to download file (separate w/ ',') """
+
         message = ctx.message
         _message_content = message.content.split()
-        link = _message_content[1] if len(_message_content) > 1 else ""
+        if len(_message_content) <= 1:
+            await message.reply("USAGE: send link to download file (separate w/ ',')")
+            return
+
+        link = _message_content[1]
         _links = link.split(",")
 
         try:
