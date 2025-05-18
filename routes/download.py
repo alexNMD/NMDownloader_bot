@@ -1,6 +1,6 @@
 from flask import request, Blueprint, jsonify
 
-from libs.lib_task import get_download_task, revoke_task
+from libs.lib_task import get_download_task
 from services.download_handler import DownloadHandler
 from tasks.download_tasks import download_task
 from config import gunicorn_logger
