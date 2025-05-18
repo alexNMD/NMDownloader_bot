@@ -34,8 +34,8 @@ def stop(uuid) -> dict[str, object]:
     if not isinstance(download_meta.get('download'), DownloadHandler):
         return jsonify(dict(message='Unable to retrieve download')), 400
 
-    revoke_task(uuid)
     download_meta['download'].cancel()
+    gunicorn_logger.info(f'Task: {uuid} Revoked')
 
     return jsonify(
         dict(message="Download stopped")

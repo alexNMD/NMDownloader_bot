@@ -25,7 +25,3 @@ def get_download_task(task_id: str, json_readable=False):
         download=download.to_dict() if json_readable else download,
         stats=result.info.get('stats', {})
     ) if isinstance(download, DownloadHandler) else get_task_result(task_id)
-
-def revoke_task(task_id: str) -> None:
-    celery_app.control.revoke(task_id=task_id, terminate=True)
-    logger.info(f'Task {task_id} Revoked')

@@ -94,6 +94,8 @@ class DownloadHandler:
             raise DownloadException(self, error) from error
 
     def cancel(self):
+        self.task.revoke(terminate=True)
+        logger.info(f'Task Revoked')
         if os.path.exists(self.file_path):
             os.remove(self.file_path)
             logger.info(f"file removed: {self.file_path}")
