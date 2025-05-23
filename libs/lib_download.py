@@ -1,5 +1,6 @@
 import re
 from enum import Enum
+from urllib.parse import unquote
 
 import requests
 
@@ -53,4 +54,4 @@ def extract_filename(url):
 
     if _match := re.search(_filename_regex, _content_disposition):
         return _match.group(1)
-    return url.split('/')[-1]
+    return unquote(url.split('/')[-1])
