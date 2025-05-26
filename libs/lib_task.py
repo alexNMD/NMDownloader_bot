@@ -13,7 +13,7 @@ def get_task_result(task_id: str) -> dict:
         meta=meta_info
     )
 
-def get_download_task(task_id: str, json_readable=False):
+def get_download_task(task_id: str, json_readable=False) -> dict:
     result = AsyncResult(task_id, app=celery_app)
     try:
         download = pickle.loads(result.info['download'])
