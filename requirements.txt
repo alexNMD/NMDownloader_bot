@@ -40,4 +40,3 @@ vine==5.1.0
 wcwidth==0.2.13
 yarl==1.18.3
 gunicorn==23.0.0
-rarfile==4.2

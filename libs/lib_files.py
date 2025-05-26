@@ -8,8 +8,6 @@ from typing import LiteralString
 import zipfile
 import tarfile
 
-import rarfile
-
 logger = logging.getLogger('celery')
 
 SERIE_REGEX = (r'^(?P<series_name>[^ ._-]+(?:[ ._-]+[^ ._-]+)*)[ ._-]*S(?P<season>\d{1,2})[ ._-]*E(?P<episode>\d{1,'
@@ -89,13 +87,9 @@ def list_tar_contents(path):
     with tarfile.open(path, 'r:*') as archive:
         return archive.getnames()
 
-def list_rar_contents(path):
-    with rarfile.RarFile(path, 'r') as archive:
-        return archive.namelist()
-
 def is_compressed(path) -> bool:
     _archive_extensions = [
-        '.zip', '.tar', '.tar.gz', '.tgz', '.tar.bz2', '.tbz', '.tar.xz', '.txz', '.rar',
+        '.zip', '.tar', '.tar.gz', '.tgz', '.tar.bz2', '.tbz', '.tar.xz', '.txz',
     ]
     _file_extension = os.path.splitext(path)[1]
 
@@ -111,7 +105,6 @@ def handle_archive(directory_path) -> None:
             '.tbz': list_tar_contents,
             '.tar.xz': list_tar_contents,
             '.txz': list_tar_contents,
-            '.rar': list_rar_contents
     }
     _extension = os.path.splitext(directory_path)[1]
     _parent_directory = os.path.dirname(directory_path)
