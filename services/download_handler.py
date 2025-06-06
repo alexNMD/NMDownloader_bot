@@ -1,5 +1,6 @@
 import math
 import os
+import io
 import re
 import time
 import pickle
@@ -26,14 +27,17 @@ from libs.lib_download import (
     DownloadStatus
 )
 
+CHUNK_SIZE = 1024 * 64  # 64 KB
+
 discord_api = DiscordAPI(DISCORD_TOKEN)
 
 class DownloadHandler:
     def __init__(self, url, task, message_id=None, channel_id=None):
+        self.task = task
         self.status_message_id = None
-        self.url = self._compute_url(url)
         self.message_id = message_id
         self.channel_id = channel_id or BOT_MESSAGES_CHANNEL_ID
+        self.url = self._compute_url(url)
         try:
             self.file_name = extract_filename(self.url)
         except Exception as error:
@@ -43,8 +47,8 @@ class DownloadHandler:
             else "films"
         self.base_download_path = f"{NAS_PATH}/{self.type_dl}"
         self.file_path = f"{self.base_download_path}/{self.file_name}"
+        self.download_start_time = None
         self.total_size = None
-        self.task = task
         self.finished = False
 
     def check(self):
@@ -61,33 +65,11 @@ class DownloadHandler:
             with requests.get(self.url, stream=True, timeout=3600) as response:
                 if response.ok:
                     self.total_size = int(response.headers.get('Content-Length', 0))
-                    _downloaded_size = 0
-                    _count_refresh = 0
-                    _download_start_time = time.time()
-                    with open(self.file_path, 'wb') as file:
-                        self._update_status(DownloadStatus.STARTED)
-                        # start read file
-                        for chunk in response.iter_content(chunk_size=8192):
-                            if not chunk:
-                                break
-                            file.write(chunk)
-                            _downloaded_size += len(chunk)  # bytes
-                            elapsed_time = time.time() - _download_start_time  # seconds
-                            if math.trunc(elapsed_time / REFRESH_RATE) > _count_refresh:
-                                _count_refresh += 1
-                                _download_speed = _downloaded_size / elapsed_time  # bytes
-
-                                self._update_status(
-                                    DownloadStatus.RUNNING,
-                                    additionnal=self._compute_progress(
-                                        _downloaded_size, self.total_size, _download_speed
-                                    ),
-                                    meta_data=dict(
-                                        progress=_downloaded_size,
-                                        speed=_download_speed
-                                    )
-                                )
-                        # end read file
+                    self.download_start_time = time.time()
+                    with open(self.file_path, 'wb') as f:
+                        with io.BufferedWriter(f, buffer_size=CHUNK_SIZE) as file:
+                            self._update_status(DownloadStatus.STARTED)
+                            self._handle_chunks(file, response)
                     self._finish()
         except Exception as error:
             raise DownloadException(self, error) from error
@@ -111,7 +93,7 @@ class DownloadHandler:
                        additionnal: str=str(), meta_data=None) -> None:
         title = f"Download {status.name}"
         _base_content = f'[{self.type_dl}] {self.file_name} \n' \
-            if (self.type_dl and self.file_name) else ''
+            if (hasattr(self, 'type_dl') and hasattr(self, 'file_name')) else ''
         content = _base_content + additionnal
 
         self._update_task_meta(meta_data)
@@ -167,15 +149,39 @@ class DownloadHandler:
         self._update_status(DownloadStatus.DONE)
         self.finished = True
 
-
-    @staticmethod
-    def _compute_url(url) -> str:
+    def _compute_url(self, url) -> str:
         download_providers = {
             "1fichier.com": compute_url_from_1fichier
         }
         _netloc = urlparse(url).netloc
 
-        return download_providers.get(_netloc, lambda url:url)(url)
+        try:
+            return download_providers.get(_netloc, lambda url:url)(url)
+        except Exception as error:
+            raise DownloadException(self, str(error))
+    
+    def _handle_chunks(self, file, response) -> None:
+        _downloaded_size = 0
+        _count_refresh = 0
+
+        for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
+            if not chunk:
+                break
+            file.write(chunk)
+            _downloaded_size += len(chunk)
+            elapsed_time = time.time() - self.download_start_time
+            if math.trunc(elapsed_time / REFRESH_RATE) > _count_refresh:
+                _count_refresh += 1
+                _download_speed = _downloaded_size / elapsed_time
+                self._update_status(
+                    DownloadStatus.RUNNING,
+                    additionnal=self._compute_progress(_downloaded_size, self.total_size, _download_speed),
+                    meta_data=dict(
+                        progress=_downloaded_size,
+                        total=self.total_size,
+                        speed=_download_speed
+                    )
+                )
 
     @classmethod
     def _compute_progress(cls, progress, total, speed) -> str:
