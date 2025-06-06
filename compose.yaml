@@ -7,26 +7,32 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
-    networks:
-      - app-network
 
   discord:
     image: nmd_downloader
+    build:
+      context: .
     container_name: discord
     restart: unless-stopped
     command: ["python", "-m", "apps.discord_app"]
-    networks:
-      - app-network
+    develop:
+      watch:
+        - action: rebuild
+          path: .
+          target: /NMDownloader
+          ignore:
+            - __pycache__
+
 
   celery:
     image: nmd_downloader
+    build:
+      context: .
     container_name: celery
     restart: unless-stopped
     command: ["celery", "--app", "apps.celery_app", "worker"]
     volumes:
       - ${DOWNLOAD_PATH}:${DOWNLOAD_PATH}
-    networks:
-      - app-network
     environment:
       - C_FORCE_ROOT="true"
     healthcheck:
@@ -34,19 +40,26 @@ services:
       interval: 10s
       timeout: 10s
       retries: 10
+    develop:
+      watch:
+        - action: rebuild
+          path: .
+          target: /NMDownloader
+          ignore:
+            - __pycache__
 
   flower:
     depends_on:
       celery:
         condition: service_healthy
     image: nmd_downloader
+    build:
+      context: .
     container_name: flower
     restart: unless-stopped
     ports:
       - "5555:5555"
     command: ["celery", "--app", "apps.celery_app", "flower"]
-    networks:
-      - app-network
     environment:
       - FLOWER_UNAUTHENTICATED_API=true
       - FLOWER_URL_PREFIX=flower
@@ -57,6 +70,8 @@ services:
         condition: service_healthy
     image: nmd_downloader
     container_name: flask
+    build:
+      context: .
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -68,12 +83,13 @@ services:
       "--access-logfile", "-",
       "--error-logfile", "-",
       "--log-level", "${LOG_LEVEL:-INFO}"]
-    networks:
-      - app-network
+    develop:
+      watch:
+        - action: rebuild
+          path: .
+          target: /NMDownloader
+          ignore:
+            - __pycache__
 
 volumes:
   redis-data:
-
-networks:
-  app-network:
-    driver: bridge

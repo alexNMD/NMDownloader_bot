@@ -9,9 +9,15 @@ class Download(commands.Cog):
 
     @commands.command(name="download", aliases=["d"])
     async def handle_download(self, ctx):
+        """ USAGE: send link to download file (separate w/ ',') """
+
         message = ctx.message
         _message_content = message.content.split()
-        link = _message_content[1] if len(_message_content) > 1 else ""
+        if len(_message_content) <= 1:
+            await message.reply("USAGE: send link to download file (separate w/ ',')")
+            return
+
+        link = _message_content[1]
         _links = link.split(",")
 
         try:
@@ -26,6 +32,16 @@ class Download(commands.Cog):
             logger.error(f'download failed. Error: {download_error}')
             await message.reply(f'download failed. Error: {download_error}')
         return
+
+    # Cause: Discords Cog command isn't triggered when message is posted from webhook...
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author == self.bot.user:
+            return
+
+        if message.webhook_id:
+            ctx = await self.bot.get_context(message)
+            await self.bot.invoke(ctx)
 
 async def setup(bot):
     await bot.add_cog(Download(bot))

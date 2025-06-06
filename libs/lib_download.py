@@ -1,14 +1,31 @@
 import re
+from enum import Enum
+from urllib.parse import unquote
 
 import requests
 
+from celery.exceptions import Ignore
+
 from config import logger, DOWNLOAD_TOKEN, BASE_URL_1FICHIER
+
+class DownloadStatus(Enum):
+    STARTED = int('e8f30b', 16)
+    RUNNING = int('f3ad0b', 16)
+    DONE = int('0dba2f', 16)
+    ERROR = int('f63106', 16)
+    CANCELED = int('510666', 16)
 
 class DownloadException(Exception):
     def __init__(self, download, message):
         super().__init__(message)
         logger.error(message)
-        download._update_status('Error', message)
+        download._update_status(DownloadStatus.ERROR, message)
+
+class DownloadRevokeException(Ignore):
+    def __init__(self, download, message="Canceled by User"):
+        super().__init__(message)
+        logger.info('Download Canceled')
+        download._update_status(DownloadStatus.CANCELED, message)
 
 def compute_url_from_1fichier(link):
     _url = link.split("&")[0]
@@ -32,9 +49,9 @@ def compute_url_from_1fichier(link):
     return ready_url
 
 def extract_filename(url):
-    _content_disposition = requests.head(url, timeout=10).headers.get("Content-Disposition")
+    _content_disposition = requests.head(url, timeout=10).headers.get("Content-Disposition", str())
     _filename_regex = r'filename\*?=(?:UTF-8\'\')?"?([^;\n"]+)"?'
 
     if _match := re.search(_filename_regex, _content_disposition):
         return _match.group(1)
-    return url.split('/')[-1]
+    return unquote(url.split('/')[-1])
