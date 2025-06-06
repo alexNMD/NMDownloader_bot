@@ -31,7 +31,7 @@ discord_api = DiscordAPI(DISCORD_TOKEN)
 class DownloadHandler:
     def __init__(self, url, task, message_id=None, channel_id=None):
         self.status_message_id = None
-        self.url = self.__compute_url(url)
+        self.url = self._compute_url(url)
         self.message_id = message_id
         self.channel_id = channel_id or BOT_MESSAGES_CHANNEL_ID
         try:
@@ -79,7 +79,7 @@ class DownloadHandler:
 
                                 self._update_status(
                                     DownloadStatus.RUNNING,
-                                    additionnal=self.__compute_progress(
+                                    additionnal=self._compute_progress(
                                         _downloaded_size, self.total_size, _download_speed
                                     ),
                                     meta_data=dict(
@@ -88,7 +88,7 @@ class DownloadHandler:
                                     )
                                 )
                         # end read file
-                    self.__finish()
+                    self._finish()
         except Exception as error:
             raise DownloadException(self, error) from error
 
@@ -114,10 +114,10 @@ class DownloadHandler:
             if (self.type_dl and self.file_name) else ''
         content = _base_content + additionnal
 
-        self.__update_task_meta(meta_data)
-        self.__do_notification(status, title, content)
+        self._update_task_meta(meta_data)
+        self._do_notification(status, title, content)
 
-    def __do_notification(self, status: DownloadStatus, title, content) -> None:
+    def _do_notification(self, status: DownloadStatus, title, content) -> None:
         logger.debug(title, content)
 
         if self.status_message_id:
@@ -146,7 +146,7 @@ class DownloadHandler:
                     )
 
 
-    def __update_task_meta(self, additionnal_meta=None) -> None:
+    def _update_task_meta(self, additionnal_meta=None) -> None:
         _additionnal_meta = additionnal_meta if isinstance(additionnal_meta, dict) else {}
         meta = dict(
             download=pickle.dumps(self),
@@ -156,7 +156,7 @@ class DownloadHandler:
 
         self.task.update_state(meta=meta)
 
-    def __finish(self) -> None:
+    def _finish(self) -> None:
         if is_compressed(self.file_path):
             self._update_status(DownloadStatus.RUNNING, additionnal="Extraction in progress...")
             handle_archive(self.file_path)
@@ -169,7 +169,7 @@ class DownloadHandler:
 
 
     @staticmethod
-    def __compute_url(url) -> str:
+    def _compute_url(url) -> str:
         download_providers = {
             "1fichier.com": compute_url_from_1fichier
         }
@@ -178,7 +178,7 @@ class DownloadHandler:
         return download_providers.get(_netloc, lambda url:url)(url)
 
     @classmethod
-    def __compute_progress(cls, progress, total, speed) -> str:
+    def _compute_progress(cls, progress, total, speed) -> str:
         _remaining_time_seconds = (total - progress) / speed
         _less_than_one_minute = _remaining_time_seconds < 60
 
