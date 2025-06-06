@@ -7,16 +7,22 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
-    networks:
-      - app-network
 
   discord:
     image: nmd_downloader
+    build:
+      context: .
     container_name: discord
     restart: unless-stopped
     command: ["python", "-m", "apps.discord_app"]
-    networks:
-      - app-network
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /NMDownloader
+          ignore:
+            - __pycache__
+
 
   celery:
     image: nmd_downloader
@@ -25,8 +31,6 @@ services:
     command: ["celery", "--app", "apps.celery_app", "worker"]
     volumes:
       - ${DOWNLOAD_PATH}:${DOWNLOAD_PATH}
-    networks:
-      - app-network
     environment:
       - C_FORCE_ROOT="true"
     healthcheck:
@@ -34,6 +38,13 @@ services:
       interval: 10s
       timeout: 10s
       retries: 10
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /NMDownloader
+          ignore:
+            - __pycache__
 
   flower:
     depends_on:
@@ -45,8 +56,6 @@ services:
     ports:
       - "5555:5555"
     command: ["celery", "--app", "apps.celery_app", "flower"]
-    networks:
-      - app-network
     environment:
       - FLOWER_UNAUTHENTICATED_API=true
       - FLOWER_URL_PREFIX=flower
@@ -68,12 +77,13 @@ services:
       "--access-logfile", "-",
       "--error-logfile", "-",
       "--log-level", "${LOG_LEVEL:-INFO}"]
-    networks:
-      - app-network
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /NMDownloader
+          ignore:
+            - __pycache__
 
 volumes:
   redis-data:
-
-networks:
-  app-network:
-    driver: bridge
