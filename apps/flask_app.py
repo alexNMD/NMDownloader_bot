@@ -6,7 +6,7 @@ from routes import register_routes
 
 flask_app = Flask(__name__)
 
-gunicorn_logger = logging.getLogger('gunicorn.error')
+gunicorn_logger = logging.getLogger("gunicorn.error")
 flask_app.logger.handlers = gunicorn_logger.handlers
 flask_app.logger.setLevel(LOG_LEVEL)
 

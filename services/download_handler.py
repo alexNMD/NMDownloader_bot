@@ -8,31 +8,20 @@ from urllib.parse import urlparse
 import requests
 
 from apps.celery_app import logger
-from config import (
-    NAS_PATH,
-    DISCORD_TOKEN,
-    REFRESH_RATE,
-    BOT_MESSAGES_CHANNEL_ID,
-    CHUNK_SIZE
-)
+from config import NAS_PATH, DISCORD_TOKEN, REFRESH_RATE, BOT_MESSAGES_CHANNEL_ID, CHUNK_SIZE
 from services.discord_api import DiscordAPI
-from libs.lib_files import (
-    organize_episode,
-    dest_file_exists,
-    is_json_serializable,
-    handle_archive,
-    is_compressed
-)
+from libs.lib_files import organize_episode, dest_file_exists, is_json_serializable, handle_archive, is_compressed
 from libs.lib_progressbar import get_progress_bar
 from libs.lib_download import (
     compute_url_from_1fichier,
     extract_filename,
     DownloadException,
     DownloadRevokeException,
-    DownloadStatus
+    DownloadStatus,
 )
 
 discord_api = DiscordAPI(DISCORD_TOKEN)
+
 
 class DownloadHandler:
     def __init__(self, url, task, message_id=None, channel_id=None):
@@ -44,10 +33,8 @@ class DownloadHandler:
         try:
             self.file_name = extract_filename(self.url)
         except Exception as error:
-            raise DownloadException(self, 'Unable to retrieve filename') from error
-        self.type_dl = "series" \
-            if re.search(r'[Ss]\d{1,2}([Ee]\d{1,2})?', self.file_name) \
-            else "films"
+            raise DownloadException(self, "Unable to retrieve filename") from error
+        self.type_dl = "series" if re.search(r"[Ss]\d{1,2}([Ee]\d{1,2})?", self.file_name) else "films"
         self.base_download_path = f"{NAS_PATH}/{self.type_dl}"
         self.file_path = f"{self.base_download_path}/{self.file_name}"
         self.download_start_time = None
@@ -56,10 +43,10 @@ class DownloadHandler:
 
     def check(self):
         if not os.path.exists(self.base_download_path):
-            raise DownloadException(self, f'{self.base_download_path} doesn\'t exists')
+            raise DownloadException(self, f"{self.base_download_path} doesn't exists")
 
         if dest_file_exists(self.file_path):
-            raise DownloadException(self, 'Already exists')
+            raise DownloadException(self, "Already exists")
 
         return True
 
@@ -67,9 +54,9 @@ class DownloadHandler:
         try:
             with requests.get(self.url, stream=True, timeout=3600) as response:
                 if response.ok:
-                    self.total_size = int(response.headers.get('Content-Length', 0))
+                    self.total_size = int(response.headers.get("Content-Length", 0))
                     self.download_start_time = time.time()
-                    with open(self.file_path, 'wb') as f:
+                    with open(self.file_path, "wb") as f:
                         with io.BufferedWriter(f, buffer_size=CHUNK_SIZE) as file:
                             self._update_status(DownloadStatus.STARTED)
                             self._handle_chunks(file, response)
@@ -85,18 +72,13 @@ class DownloadHandler:
         raise DownloadRevokeException(self)
 
     def to_dict(self):
-        return {
-            key: value
-            for key, value in self.__dict__.items()
-            if is_json_serializable(value)
-        }
+        return {key: value for key, value in self.__dict__.items() if is_json_serializable(value)}
 
-    def _update_status(self,
-                       status: DownloadStatus,
-                       additionnal: str=str(), meta_data=None) -> None:
+    def _update_status(self, status: DownloadStatus, additionnal: str = str(), meta_data=None) -> None:
         title = f"Download {status.name}"
-        _base_content = f'[{self.type_dl}] {self.file_name} \n' \
-            if (hasattr(self, 'type_dl') and hasattr(self, 'file_name')) else ''
+        _base_content = (
+            f"[{self.type_dl}] {self.file_name} \n" if (hasattr(self, "type_dl") and hasattr(self, "file_name")) else ""
+        )
         content = _base_content + additionnal
 
         self._update_task_meta(meta_data)
@@ -106,38 +88,20 @@ class DownloadHandler:
         logger.debug(title, content)
 
         if self.status_message_id:
-            discord_api.edit_embed(
-                self.channel_id,
-                self.status_message_id,
-                title,
-                content,
-                status.value
-            )
+            discord_api.edit_embed(self.channel_id, self.status_message_id, title, content, status.value)
             return
 
-        self.status_message_id = discord_api.reply_with_embed(
-                self.channel_id,
-                self.message_id,
-                title,
-                content,
-                status.value
-            ) if self.message_id \
-                else \
-                    discord_api.send_embed(
-                        self.channel_id,
-                        title,
-                        content,
-                        status.value
-                    )
-
+        self.status_message_id = (
+            discord_api.reply_with_embed(self.channel_id, self.message_id, title, content, status.value)
+            if self.message_id
+            else discord_api.send_embed(self.channel_id, title, content, status.value)
+        )
 
     def _update_task_meta(self, additionnal_meta=None) -> None:
         _additionnal_meta = additionnal_meta if isinstance(additionnal_meta, dict) else {}
         meta = dict(
             download=pickle.dumps(self),
-        ) | dict (
-            stats=_additionnal_meta
-        )
+        ) | dict(stats=_additionnal_meta)
 
         self.task.update_state(meta=meta)
 
@@ -146,23 +110,21 @@ class DownloadHandler:
             self._update_status(DownloadStatus.RUNNING, additionnal="Extraction in progress...")
             handle_archive(self.file_path)
         else:
-            if self.type_dl in ['series']:
+            if self.type_dl in ["series"]:
                 self.file_path = organize_episode(self.file_path)
 
         self._update_status(DownloadStatus.DONE)
         self.finished = True
 
     def _compute_url(self, url) -> str:
-        download_providers = {
-            "1fichier.com": compute_url_from_1fichier
-        }
+        download_providers = {"1fichier.com": compute_url_from_1fichier}
         _netloc = urlparse(url).netloc
 
         try:
-            return download_providers.get(_netloc, lambda url:url)(url)
+            return download_providers.get(_netloc, lambda url: url)(url)
         except Exception as error:
             raise DownloadException(self, str(error))
-    
+
     def _handle_chunks(self, file, response) -> None:
         downloaded_size = 0
         _count_refresh = 0
@@ -183,11 +145,7 @@ class DownloadHandler:
                 self._update_status(
                     DownloadStatus.RUNNING,
                     additionnal=self._compute_progress(downloaded_size, self.total_size, download_speed),
-                    meta_data=dict(
-                        progress=downloaded_size,
-                        total=self.total_size,
-                        speed=download_speed
-                    )
+                    meta_data=dict(progress=downloaded_size, total=self.total_size, speed=download_speed),
                 )
 
     @classmethod
@@ -196,8 +154,7 @@ class DownloadHandler:
         _less_than_one_minute = _remaining_time_seconds < 60
 
         progress_bar = get_progress_bar(progress, total)
-        remaining_time = \
-            _remaining_time_seconds if _less_than_one_minute else _remaining_time_seconds / 60
+        remaining_time = _remaining_time_seconds if _less_than_one_minute else _remaining_time_seconds / 60
         time_unit = "sec" if _less_than_one_minute else "min"
         speed_in_mb = speed / (1024 * 1024)
 
