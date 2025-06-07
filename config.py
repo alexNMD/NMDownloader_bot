@@ -13,6 +13,7 @@ NAS_PATH = os.getenv("DOWNLOAD_PATH")
 REFRESH_RATE = int(os.getenv("REFRESH_RATE", default='10'))  # Default => 10 seconds
 LIMIT = int(os.getenv("CONCURRENCY", default='4'))  # Default => 4 threads
 LOG_LEVEL = os.getenv("LOG_LEVEL", default="INFO")
+CHUNK_SIZE = 1024 * 64  # 64 KB
 
 PREFIX = "!"
 ADMINS = [

@@ -1,4 +1,3 @@
-import math
 import os
 import io
 import re
@@ -9,7 +8,13 @@ from urllib.parse import urlparse
 import requests
 
 from apps.celery_app import logger
-from config import NAS_PATH, DISCORD_TOKEN, REFRESH_RATE, BOT_MESSAGES_CHANNEL_ID
+from config import (
+    NAS_PATH,
+    DISCORD_TOKEN,
+    REFRESH_RATE,
+    BOT_MESSAGES_CHANNEL_ID,
+    CHUNK_SIZE
+)
 from services.discord_api import DiscordAPI
 from libs.lib_files import (
     organize_episode,
@@ -26,8 +31,6 @@ from libs.lib_download import (
     DownloadRevokeException,
     DownloadStatus
 )
-
-CHUNK_SIZE = 1024 * 64  # 64 KB
 
 discord_api = DiscordAPI(DISCORD_TOKEN)
 
@@ -161,25 +164,29 @@ class DownloadHandler:
             raise DownloadException(self, str(error))
     
     def _handle_chunks(self, file, response) -> None:
-        _downloaded_size = 0
+        downloaded_size = 0
         _count_refresh = 0
 
         for chunk in response.iter_content(chunk_size=CHUNK_SIZE):
             if not chunk:
                 break
+
             file.write(chunk)
-            _downloaded_size += len(chunk)
-            elapsed_time = time.time() - self.download_start_time
-            if math.trunc(elapsed_time / REFRESH_RATE) > _count_refresh:
+
+            downloaded_size += len(chunk)
+            _elapsed_time = time.time() - self.download_start_time
+            _refresh_interval_count = int(_elapsed_time / REFRESH_RATE)
+
+            if _refresh_interval_count > _count_refresh:
                 _count_refresh += 1
-                _download_speed = _downloaded_size / elapsed_time
+                download_speed = downloaded_size / _elapsed_time
                 self._update_status(
                     DownloadStatus.RUNNING,
-                    additionnal=self._compute_progress(_downloaded_size, self.total_size, _download_speed),
+                    additionnal=self._compute_progress(downloaded_size, self.total_size, download_speed),
                     meta_data=dict(
-                        progress=_downloaded_size,
+                        progress=downloaded_size,
                         total=self.total_size,
-                        speed=_download_speed
+                        speed=download_speed
                     )
                 )
 
