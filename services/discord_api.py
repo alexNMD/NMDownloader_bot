@@ -1,10 +1,11 @@
 import requests
 
+from config import BASE_URL_DISCORD
 
 class DiscordAPI:
     def __init__(self, token):
         self.token = token
-        self.base_url = "https://discord.com/api/v10"
+        self.base_url = BASE_URL_DISCORD
         self.headers = {"Authorization": f"Bot {self.token}", "Content-Type": "application/json"}
 
     def reply_with_embed(self, channel_id, message_id, title, description, color):
