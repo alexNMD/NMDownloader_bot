@@ -19,34 +19,39 @@ SERIE_REGEX = (
 def organize_series(base_directory: str) -> None:
     # Parcourir tous les fichiers dans le répertoire
     for filename in os.listdir(base_directory):
-        if match := __match(filename):
-            _dest_directory = os.path.join(base_directory, __get_sub_directory(match))
+        if match := _match(filename):
+            _dest_directory = os.path.join(base_directory, _get_sub_directory(match))
 
             os.makedirs(_dest_directory, exist_ok=True)
-            __move_file(base_directory, _dest_directory, filename)
+            _move_file(base_directory, _dest_directory, filename)
 
 
 def organize_episode(file_path: str) -> LiteralString | str | bytes:
     _filename = os.path.basename(file_path)
     _base_directory = os.path.dirname(file_path)
 
-    if match := __match(_filename):
-        _dest_directory = os.path.join(_base_directory, __get_sub_directory(match))
+    if match := _match(_filename):
+        _dest_directory = os.path.join(_base_directory, _get_sub_directory(match))
 
         os.makedirs(_dest_directory, exist_ok=True)
-        return __move_file(_base_directory, _dest_directory, _filename)
+        return _move_file(_base_directory, _dest_directory, _filename)
 
 
 def dest_file_exists(src_file_path: str) -> bool:
     _filename = os.path.basename(src_file_path)
     _base_directory = os.path.dirname(src_file_path)
+    _series = _match(_filename)
+    case_match = [os.path.isfile(src_file_path)]
 
-    if series := __match(_filename):
-        return os.path.isfile(os.path.join(_base_directory, __get_sub_directory(series), _filename))
-    return os.path.isfile(src_file_path)
+    if _series:
+        case_match.append(
+            os.path.isfile(os.path.join(_base_directory, _get_sub_directory(_series), _filename))
+        )
+    
+    return any(case_match)
 
 
-def __match(filename: str) -> dict | None:
+def _match(filename: str) -> dict | None:
     _regex = re.compile(SERIE_REGEX, re.IGNORECASE)
 
     if match := _regex.match(filename):
@@ -54,7 +59,7 @@ def __match(filename: str) -> dict | None:
     return None
 
 
-def __move_file(src_directory, dest_directory, filename) -> LiteralString | str | bytes:
+def _move_file(src_directory, dest_directory, filename) -> LiteralString | str | bytes:
     src_path = os.path.join(src_directory, filename)
     dest_path = os.path.join(dest_directory, filename)
 
@@ -63,7 +68,7 @@ def __move_file(src_directory, dest_directory, filename) -> LiteralString | str 
     return dest_path
 
 
-def __get_sub_directory(match: dict) -> str:
+def _get_sub_directory(match: dict) -> str:
     _series_name_formatted = match["series_name"].replace(" ", ".")
     _season_formatted = f'Saison.{match["season"]}'
 
