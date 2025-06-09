@@ -7,6 +7,8 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+    networks:
+      - nmd-network
 
   discord:
     image: nmd_downloader
@@ -22,6 +24,8 @@ services:
           target: /NMDownloader
           ignore:
             - __pycache__
+    networks:
+      - nmd-network
 
 
   celery:
@@ -47,6 +51,8 @@ services:
           target: /NMDownloader
           ignore:
             - __pycache__
+    networks:
+      - nmd-network
 
   flower:
     depends_on:
@@ -63,11 +69,13 @@ services:
     environment:
       - FLOWER_UNAUTHENTICATED_API=true
       - FLOWER_URL_PREFIX=flower
+    networks:
+      - nmd-network
 
   flask:
-    depends_on:
-      celery:
-        condition: service_healthy
+    # depends_on:
+    #   celery:
+    #     condition: service_healthy
     image: nmd_downloader
     container_name: flask
     build:
@@ -90,6 +98,11 @@ services:
           target: /NMDownloader
           ignore:
             - __pycache__
+    networks:
+      - nmd-network
 
 volumes:
   redis-data:
+
+networks:
+  nmd-network:
