@@ -2,7 +2,7 @@ name: Build & Publish Docker Image
 
 on:
   push:
-    branches: [dev]
+    branches: [wip]
 
 jobs:
   build-and-push:
