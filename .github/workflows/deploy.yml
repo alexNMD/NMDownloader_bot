@@ -8,6 +8,9 @@ permissions:
   contents: read
   packages: write
 
+env:
+  IMAGE_NAME: nmd_downloader
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -35,4 +38,4 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ghcr.io/${{ github.repository }}:latest
+          tags: ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME:latest
