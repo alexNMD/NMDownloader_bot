@@ -16,7 +16,11 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", default="INFO")
 CHUNK_SIZE = 1024 * 64  # 64 KB
 
 PREFIX = "!"
-ADMINS = [admin.strip() for admin in os.getenv("DISCORD_ADMINS").split(",")] if os.getenv("DISCORD_ADMINS") else []
+ADMINS = (
+    [admin.strip() for admin in os.getenv("DISCORD_ADMINS").split(",")]
+    if os.getenv("DISCORD_ADMINS")
+    else []
+)
 
 ## LOGGER settings
 logger = logging.getLogger(__name__)

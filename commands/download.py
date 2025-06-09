@@ -23,7 +23,9 @@ class Download(commands.Cog):
 
         try:
             for url in _links:
-                task = download_task.delay(url=url, message_id=message.id, channel_id=message.channel.id)
+                task = download_task.delay(
+                    url=url, message_id=message.id, channel_id=message.channel.id
+                )
                 logger.info(f"Task sent: {task.id}")
         except Exception as download_error:
             logger.error(f"download failed. Error: {download_error}")

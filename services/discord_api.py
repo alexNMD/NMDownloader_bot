@@ -2,6 +2,7 @@ import requests
 
 from config import BASE_URL_DISCORD
 
+
 class DiscordAPI:
     def __init__(self, token):
         self.token = token
