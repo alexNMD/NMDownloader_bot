@@ -7,24 +7,36 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+    networks:
+      - nmd-network
 
   discord:
-    image: ghcr.io/alexnmd/nmd_downloader:latest
-    volumes:
-      - .env:/NMDownloader/.env
+    image: nmd_downloader
+    build:
+      context: .
     container_name: discord
     restart: unless-stopped
     command: ["python", "-m", "apps.discord_app"]
+    develop:
+      watch:
+        - action: rebuild
+          path: .
+          target: /NMDownloader
+          ignore:
+            - __pycache__
+    networks:
+      - nmd-network
 
 
   celery:
-    image: ghcr.io/alexnmd/nmd_downloader:latest
+    image: nmd_downloader
+    build:
+      context: .
     container_name: celery
     restart: unless-stopped
     command: ["celery", "--app", "apps.celery_app", "worker"]
     volumes:
       - ${DOWNLOAD_PATH}:${DOWNLOAD_PATH}
-      - .env:/NMDownloader/.env
     environment:
       - C_FORCE_ROOT="true"
     healthcheck:
@@ -32,14 +44,23 @@ services:
       interval: 10s
       timeout: 10s
       retries: 10
+    develop:
+      watch:
+        - action: rebuild
+          path: .
+          target: /NMDownloader
+          ignore:
+            - __pycache__
+    networks:
+      - nmd-network
 
   flower:
     depends_on:
       celery:
         condition: service_healthy
-    image: ghcr.io/alexnmd/nmd_downloader:latest
-    volumes:
-      - .env:/NMDownloader/.env
+    image: nmd_downloader
+    build:
+      context: .
     container_name: flower
     restart: unless-stopped
     ports:
@@ -48,15 +69,17 @@ services:
     environment:
       - FLOWER_UNAUTHENTICATED_API=true
       - FLOWER_URL_PREFIX=flower
+    networks:
+      - nmd-network
 
   flask:
-    depends_on:
-      celery:
-        condition: service_healthy
-    image: ghcr.io/alexnmd/nmd_downloader:latest
-    volumes:
-      - .env:/NMDownloader/.env
+    # depends_on:
+    #   celery:
+    #     condition: service_healthy
+    image: nmd_downloader
     container_name: flask
+    build:
+      context: .
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -68,6 +91,18 @@ services:
       "--access-logfile", "-",
       "--error-logfile", "-",
       "--log-level", "${LOG_LEVEL:-INFO}"]
+    develop:
+      watch:
+        - action: rebuild
+          path: .
+          target: /NMDownloader
+          ignore:
+            - __pycache__
+    networks:
+      - nmd-network
 
 volumes:
   redis-data:
+
+networks:
+  nmd-network:
