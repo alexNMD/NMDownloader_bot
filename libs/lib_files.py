@@ -47,16 +47,16 @@ def dest_file_exists(src_file_path: str) -> bool:
         case_match.append(
             os.path.isfile(os.path.join(_base_directory, _get_sub_directory(_series), _filename))
         )
-    
+
     return any(case_match)
 
 
-def _match(filename: str) -> dict | None:
+def _match(filename: str) -> dict | bool:
     _regex = re.compile(SERIE_REGEX, re.IGNORECASE)
 
     if match := _regex.match(filename):
         return match.groupdict()
-    return None
+    return False
 
 
 def _move_file(src_directory, dest_directory, filename) -> LiteralString | str | bytes:

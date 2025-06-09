@@ -10,7 +10,13 @@ import requests
 from apps.celery_app import logger
 from config import NAS_PATH, DISCORD_TOKEN, REFRESH_RATE, BOT_MESSAGES_CHANNEL_ID, CHUNK_SIZE
 from services.discord_api import DiscordAPI
-from libs.lib_files import organize_episode, dest_file_exists, is_json_serializable, handle_archive, is_compressed
+from libs.lib_files import (
+    organize_episode,
+    dest_file_exists,
+    is_json_serializable,
+    handle_archive,
+    is_compressed,
+)
 from libs.lib_progressbar import get_progress_bar
 from libs.lib_download import (
     compute_url_from_1fichier,
@@ -34,9 +40,11 @@ class DownloadHandler:
             self.file_name = extract_filename(self.url)
         except Exception as error:
             raise DownloadException(self, "Unable to retrieve filename") from error
-        self.type_dl = "series" if re.search(r"[Ss]\d{1,2}([Ee]\d{1,2})?", self.file_name) else "films"
+        self.type_dl = (
+            "series" if re.search(r"[Ss]\d{1,2}([Ee]\d{1,2})?", self.file_name) else "films"
+        )
         self.base_download_path = f"{NAS_PATH}/{self.type_dl}"
-        self.file_path = f"{self.base_download_path}/{self.file_name}"
+        self.file_path = os.path.join(self.base_download_path, self.file_name)
         self.download_start_time = None
         self.total_size = None
         self.finished = False
@@ -61,23 +69,27 @@ class DownloadHandler:
                             self._update_status(DownloadStatus.STARTED)
                             self._handle_chunks(file, response)
                     self._finish()
+        except FileNotFoundError as error:
+            raise DownloadException(self, error) from error
         except Exception as error:
+            self._remove()
             raise DownloadException(self, error) from error
 
     def cancel(self):
-        if os.path.exists(self.file_path):
-            os.remove(self.file_path)
-            logger.info(f"file removed: {self.file_path}")
-
+        self._remove()
         raise DownloadRevokeException(self)
 
     def to_dict(self):
         return {key: value for key, value in self.__dict__.items() if is_json_serializable(value)}
 
-    def _update_status(self, status: DownloadStatus, additionnal: str = str(), meta_data=None) -> None:
+    def _update_status(
+        self, status: DownloadStatus, additionnal: str = str(), meta_data=None
+    ) -> None:
         title = f"Download {status.name}"
         _base_content = (
-            f"[{self.type_dl}] {self.file_name} \n" if (hasattr(self, "type_dl") and hasattr(self, "file_name")) else ""
+            f"[{self.type_dl}] {self.file_name} \n"
+            if (hasattr(self, "type_dl") and hasattr(self, "file_name"))
+            else ""
         )
         content = _base_content + additionnal
 
@@ -88,11 +100,15 @@ class DownloadHandler:
         logger.debug(title, content)
 
         if self.status_message_id:
-            discord_api.edit_embed(self.channel_id, self.status_message_id, title, content, status.value)
+            discord_api.edit_embed(
+                self.channel_id, self.status_message_id, title, content, status.value
+            )
             return
 
         self.status_message_id = (
-            discord_api.reply_with_embed(self.channel_id, self.message_id, title, content, status.value)
+            discord_api.reply_with_embed(
+                self.channel_id, self.message_id, title, content, status.value
+            )
             if self.message_id
             else discord_api.send_embed(self.channel_id, title, content, status.value)
         )
@@ -144,9 +160,18 @@ class DownloadHandler:
                 download_speed = downloaded_size / _elapsed_time
                 self._update_status(
                     DownloadStatus.RUNNING,
-                    additionnal=self._compute_progress(downloaded_size, self.total_size, download_speed),
-                    meta_data=dict(progress=downloaded_size, total=self.total_size, speed=download_speed),
+                    additionnal=self._compute_progress(
+                        downloaded_size, self.total_size, download_speed
+                    ),
+                    meta_data=dict(
+                        progress=downloaded_size, total=self.total_size, speed=download_speed
+                    ),
                 )
+
+    def _remove(self):
+        if os.path.exists(self.file_path):
+            os.remove(self.file_path)
+            logger.info(f"file removed: {self.file_path}")
 
     @classmethod
     def _compute_progress(cls, progress, total, speed) -> str:
@@ -154,7 +179,9 @@ class DownloadHandler:
         _less_than_one_minute = _remaining_time_seconds < 60
 
         progress_bar = get_progress_bar(progress, total)
-        remaining_time = _remaining_time_seconds if _less_than_one_minute else _remaining_time_seconds / 60
+        remaining_time = (
+            _remaining_time_seconds if _less_than_one_minute else _remaining_time_seconds / 60
+        )
         time_unit = "sec" if _less_than_one_minute else "min"
         speed_in_mb = speed / (1024 * 1024)
 

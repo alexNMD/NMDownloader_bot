@@ -21,14 +21,14 @@ class DownloadException(Exception):
     def __init__(self, download, message):
         super().__init__(message)
         logger.error(message)
-        download._update_status(DownloadStatus.ERROR, message)
+        download._update_status(DownloadStatus.ERROR, str(message))
 
 
 class DownloadRevokeException(Ignore):
     def __init__(self, download, message="Canceled by User"):
         super().__init__(message)
         logger.info("Download Canceled")
-        download._update_status(DownloadStatus.CANCELED, message)
+        download._update_status(DownloadStatus.CANCELED, str(message))
 
 
 def compute_url_from_1fichier(link):
