@@ -30,8 +30,8 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t ${{ steps.vars.outputs.image }} .
+        docker build -t nmd_downloader .
 
     - name: Push Docker image
       run: |
-        docker push ${{ steps.vars.outputs.image }}
+        docker push nmd_downloader
