@@ -1,0 +1,39 @@
+name: Build & Publish Docker Image
+
+on:
+  push:
+    branches: [wip]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set image tag
+      id: vars
+      run: |
+        IMAGE_NAME=ghcr.io/${{ github.repository }}:latest
+        echo "image=$IMAGE_NAME" >> "$GITHUB_OUTPUT"
+
+    - name: Build Docker image
+      run: |
+        docker build -t nmd_downloader .
+
+    - name: Push Docker image
+      run: |
+        docker push nmd_downloader
