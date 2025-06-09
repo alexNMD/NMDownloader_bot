@@ -1,0 +1,37 @@
+name: Build & Publish Docker Image
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set image tag
+      id: vars
+      run: |
+        IMAGE_NAME=ghcr.io/${{ github.repository }}:latest
+        echo "image=$IMAGE_NAME" >> "$GITHUB_OUTPUT"
+
+    - name: Build Docker image
+      run: |
+        docker build -t ${{ steps.vars.outputs.image }} .
+
+    - name: Push Docker image
+      run: |
+        docker push ${{ steps.vars.outputs.image }}
