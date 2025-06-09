@@ -8,7 +8,7 @@ name: Demo Push
 on:
   push:
     branches:
-      - dev
+      - wip
     # tags:
     #   - v*
   # pull_request:
