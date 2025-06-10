@@ -9,10 +9,8 @@ custom_intents.presences = False
 custom_intents.message_content = True
 
 client = NMDownloader(
-    intents=custom_intents,
-    bot_channel=BOT_MESSAGES_CHANNEL_ID,
-    command_prefix=PREFIX
+    intents=custom_intents, bot_channel=BOT_MESSAGES_CHANNEL_ID, command_prefix=PREFIX
 )
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     client.run(token=DISCORD_TOKEN, log_level=LOG_LEVEL)

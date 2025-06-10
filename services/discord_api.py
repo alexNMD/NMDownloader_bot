@@ -1,14 +1,13 @@
 import requests
 
+from config import BASE_URL_DISCORD
+
 
 class DiscordAPI:
     def __init__(self, token):
         self.token = token
-        self.base_url = "https://discord.com/api/v10"
-        self.headers = {
-            "Authorization": f"Bot {self.token}",
-            "Content-Type": "application/json"
-        }
+        self.base_url = BASE_URL_DISCORD
+        self.headers = {"Authorization": f"Bot {self.token}", "Content-Type": "application/json"}
 
     def reply_with_embed(self, channel_id, message_id, title, description, color):
         """
@@ -28,16 +27,11 @@ class DiscordAPI:
             "color": color,
         }
 
-        data = {
-            "embeds": [embed],
-            "message_reference": {
-                "message_id": message_id
-            }
-        }
+        data = {"embeds": [embed], "message_reference": {"message_id": message_id}}
 
         response = requests.post(url, headers=self.headers, json=data, timeout=10)
         response_json = response.json()
-        return response_json.get('id')
+        return response_json.get("id")
 
     def send_embed(self, channel_id, title, description, color):
         """
@@ -56,13 +50,11 @@ class DiscordAPI:
             "color": color,
         }
 
-        data = {
-            "embeds": [embed]
-        }
+        data = {"embeds": [embed]}
 
         response = requests.post(url, headers=self.headers, json=data, timeout=10)
         response_json = response.json()
-        return response_json.get('id')
+        return response_json.get("id")
 
     def edit_embed(self, channel_id, message_id, title=None, description=None, color=None):
         """
@@ -84,9 +76,7 @@ class DiscordAPI:
         if color is not None:
             embed["color"] = color
 
-        data = {
-            "embeds": [embed]
-        }
+        data = {"embeds": [embed]}
 
         response = requests.patch(url, headers=self.headers, json=data, timeout=10)
         return response.json()
@@ -99,12 +89,10 @@ class DiscordAPI:
         :return: La réponse de l'API Discord.
         """
         url = f"{self.base_url}/channels/{channel_id}/messages"
-        data = {
-            "content": content
-        }
+        data = {"content": content}
         response = requests.post(url, headers=self.headers, json=data, timeout=10)
         response_json = response.json()
-        return response_json.get('id')
+        return response_json.get("id")
 
     def edit_message(self, channel_id, message_id, new_content):
         """
@@ -115,9 +103,7 @@ class DiscordAPI:
         :return: La réponse de l'API Discord.
         """
         url = f"{self.base_url}/channels/{channel_id}/messages/{message_id}"
-        data = {
-            "content": new_content
-        }
+        data = {"content": new_content}
         response = requests.patch(url, headers=self.headers, json=data, timeout=10)
         return response.json()
 
@@ -130,12 +116,7 @@ class DiscordAPI:
         :return: L'ID du message envoyé.
         """
         url = f"{self.base_url}/channels/{channel_id}/messages"
-        data = {
-            "content": content,
-            "message_reference": {
-                "message_id": message_id
-            }
-        }
+        data = {"content": content, "message_reference": {"message_id": message_id}}
         response = requests.post(url, headers=self.headers, json=data, timeout=10)
         response_json = response.json()
-        return response_json.get('id')
+        return response_json.get("id")
