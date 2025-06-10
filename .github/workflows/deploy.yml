@@ -2,7 +2,7 @@ name: Build & Push Multi-Arch Docker Image
 
 on:
   push:
-    branches: [main]
+    branches: [wip]
 
 permissions:
   contents: read
@@ -40,3 +40,25 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ghcr.io/alexnmd/nmd_downloader:latest
+
+
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up SSH
+      uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ secrets.PK }}
+
+    - name: Deploy Docker container
+      run: |
+        ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          cd ~/NMDownloader
+          docker compose down
+          docker compose pull
+          docker compose up --detach
+        EOF
