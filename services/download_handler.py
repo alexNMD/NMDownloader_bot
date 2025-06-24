@@ -10,12 +10,11 @@ import requests
 from apps.celery_app import logger
 from config import NAS_PATH, DISCORD_TOKEN, REFRESH_RATE, BOT_MESSAGES_CHANNEL_ID, CHUNK_SIZE
 from services.discord_api import DiscordAPI
+from services.files import FilesHandlerService
 from libs.lib_files import (
     organize_episode,
     dest_file_exists,
     is_json_serializable,
-    handle_archive,
-    is_compressed,
 )
 from libs.lib_progressbar import get_progress_bar
 from libs.lib_download import (
@@ -122,12 +121,16 @@ class DownloadHandler:
         self.task.update_state(meta=meta)
 
     def _finish(self) -> None:
-        if is_compressed(self.file_path):
+        _files = [self.file_path]
+        _files_handler = FilesHandlerService(self.file_path)
+        if _files_handler.is_compressed():
             self._update_status(DownloadStatus.RUNNING, additionnal="Extraction in progress...")
-            handle_archive(self.file_path)
-        else:
-            if self.type_dl in ["series"]:
-                self.file_path = organize_episode(self.file_path)
+            _files_to_append = _files_handler.handle_archive() or []
+            _files.extend(_files_to_append)
+
+        if self.type_dl in ["series"]:
+            for _file in _files:
+                self.file_path = organize_episode(_file)
 
         self._update_status(DownloadStatus.DONE)
         self.finished = True
