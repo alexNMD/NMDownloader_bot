@@ -61,6 +61,7 @@ jobs:
         ssh -o StrictHostKeyChecking=no -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           cd /application/NMDownloader
           docker compose down
-          docker compose pull
+          docker compose pull --quiet
           docker compose up --detach
+          docker image prune -a --force
         EOF
