@@ -63,10 +63,10 @@ class DownloadHandler:
                 if response.ok:
                     self.total_size = int(response.headers.get("Content-Length", 0))
                     self.download_start_time = time.time()
-                    with open(self.file_path, "wb") as f:
-                        with io.BufferedWriter(f, buffer_size=CHUNK_SIZE) as file:
+                    with open(self.file_path, "wb") as file:
+                        with io.BufferedWriter(file, buffer_size=CHUNK_SIZE) as file_buffer:
                             self._update_status(DownloadStatus.STARTED)
-                            self._handle_chunks(file, response)
+                            self._handle_chunks(file_buffer, response)
                     self._finish()
         except FileNotFoundError as error:
             raise DownloadException(self, error) from error
@@ -144,7 +144,7 @@ class DownloadHandler:
         except Exception as error:
             raise DownloadException(self, str(error))
 
-    def _handle_chunks(self, file, response) -> None:
+    def _handle_chunks(self, file_buffer, response) -> None:
         downloaded_size = 0
         _count_refresh = 0
 
@@ -152,7 +152,7 @@ class DownloadHandler:
             if not chunk:
                 break
 
-            file.write(chunk)
+            file_buffer.write(chunk)
 
             downloaded_size += len(chunk)
             _elapsed_time = time.time() - self.download_start_time
