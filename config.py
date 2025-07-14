@@ -24,7 +24,9 @@ ADMINS = (
 
 ## LOGGER settings
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=LOG_LEVEL, format="[{asctime}] [{levelname}] : {message}", style="{")
+logging.basicConfig(
+    level=LOG_LEVEL, format="[{asctime}] [{levelname}] : {message}", style="{"
+)
 gunicorn_logger = logging.getLogger("gunicorn.error")
 gunicorn_logger.setLevel(LOG_LEVEL)
 
