@@ -5,8 +5,6 @@ import shutil
 import sys
 import json
 from typing import LiteralString
-import zipfile
-import tarfile
 
 logger = logging.getLogger("celery")
 
@@ -45,7 +43,9 @@ def dest_file_exists(src_file_path: str) -> bool:
 
     if _series:
         case_match.append(
-            os.path.isfile(os.path.join(_base_directory, _get_sub_directory(_series), _filename))
+            os.path.isfile(
+                os.path.join(_base_directory, _get_sub_directory(_series), _filename)
+            )
         )
 
     return any(case_match)
@@ -70,7 +70,7 @@ def _move_file(src_directory, dest_directory, filename) -> LiteralString | str |
 
 def _get_sub_directory(match: dict) -> str:
     _series_name_formatted = match["series_name"].replace(" ", ".")
-    _season_formatted = f'Saison.{match["season"]}'
+    _season_formatted = f"Saison.{match['season']}"
 
     return os.path.join(_series_name_formatted, _season_formatted)
 
@@ -81,57 +81,6 @@ def is_json_serializable(value) -> bool:
         return True
     except (TypeError, OverflowError):
         return False
-
-
-def list_zip_contents(path):
-    with zipfile.ZipFile(path, "r") as archive:
-        return archive.namelist()
-
-
-def list_tar_contents(path):
-    with tarfile.open(path, "r:*") as archive:
-        return archive.getnames()
-
-
-def is_compressed(path) -> bool:
-    _archive_extensions = [
-        ".zip",
-        ".tar",
-        ".tar.gz",
-        ".tgz",
-        ".tar.bz2",
-        ".tbz",
-        ".tar.xz",
-        ".txz",
-    ]
-    _file_extension = os.path.splitext(path)[1]
-
-    return _file_extension in _archive_extensions
-
-
-def handle_archive(directory_path) -> None:
-    _list_archive_files_methods = {
-        ".zip": list_zip_contents,
-        ".tar": list_tar_contents,
-        ".tar.gz": list_tar_contents,
-        ".tgz": list_tar_contents,
-        ".tar.bz2": list_tar_contents,
-        ".tbz": list_tar_contents,
-        ".tar.xz": list_tar_contents,
-        ".txz": list_tar_contents,
-    }
-    _extension = os.path.splitext(directory_path)[1]
-    _parent_directory = os.path.dirname(directory_path)
-
-    if _list_files_method := _list_archive_files_methods.get(_extension):
-        logger.info("Unpacking Archive")
-        _files = _list_files_method(directory_path)
-        shutil.unpack_archive(directory_path, _parent_directory)
-        logger.info("Archive Unpacked")
-        for file in _files:
-            organize_episode(os.path.join(_parent_directory, file))
-        os.remove(directory_path)
-        logger.info(f"{directory_path} deleted")
 
 
 if __name__ == "__main__":

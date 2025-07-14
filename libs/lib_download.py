@@ -36,7 +36,10 @@ def compute_url_from_1fichier(link):
     token_response = requests.post(
         f"{BASE_URL_1FICHIER}/download/get_token.cgi",
         json={"url": _url},
-        headers={"Authorization": f"Bearer {DOWNLOAD_TOKEN}", "Content-Type": "application/json"},
+        headers={
+            "Authorization": f"Bearer {DOWNLOAD_TOKEN}",
+            "Content-Type": "application/json",
+        },
         timeout=10,
     )
     if not token_response.ok:
@@ -51,7 +54,9 @@ def compute_url_from_1fichier(link):
 
 
 def extract_filename(url):
-    _content_disposition = requests.head(url, timeout=10).headers.get("Content-Disposition", str())
+    _content_disposition = requests.head(url, timeout=10).headers.get(
+        "Content-Disposition", str()
+    )
     _filename_regex = r'filename\*?=(?:UTF-8\'\')?"?([^;\n"]+)"?'
 
     if _match := re.search(_filename_regex, _content_disposition):

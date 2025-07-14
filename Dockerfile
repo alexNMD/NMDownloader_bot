@@ -5,7 +5,7 @@ WORKDIR /NMDownloader
 COPY requirements.txt .
 
 # additionals packages
-RUN apt-get update && apt-get install -y gcc g++
+RUN apt-get update && apt-get install -y gcc g++ unrar-free
 
 RUN pip install --no-cache-dir -r requirements.txt
 
