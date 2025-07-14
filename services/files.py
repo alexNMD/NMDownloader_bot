@@ -6,21 +6,21 @@ import zipfile
 
 logger = logging.getLogger("celery")
 
+
 class FilesHandlerService:
     def __init__(self, path: str):
         self.path = path
         self.archive_extensions = {
-        ".zip": self.list_zip_contents,
-        ".tar": self.list_tar_contents,
-        ".tar.gz": self.list_tar_contents,
-        ".tgz": self.list_tar_contents,
-        ".tar.bz2": self.list_tar_contents,
-        ".tbz": self.list_tar_contents,
-        ".tar.xz": self.list_tar_contents,
-        ".txz": self.list_tar_contents,
+            ".zip": self.list_zip_contents,
+            ".tar": self.list_tar_contents,
+            ".tar.gz": self.list_tar_contents,
+            ".tgz": self.list_tar_contents,
+            ".tar.bz2": self.list_tar_contents,
+            ".tbz": self.list_tar_contents,
+            ".tar.xz": self.list_tar_contents,
+            ".txz": self.list_tar_contents,
         }
         self.is_compressed = self._is_compressed()
-
 
     def list_zip_contents(self):
         with zipfile.ZipFile(self.path, "r") as archive:
@@ -44,7 +44,6 @@ class FilesHandlerService:
         os.remove(self.path)
         logger.info(f"{self.path} deleted")
         return extracted_files
-
 
     def _is_compressed(self) -> bool:
         _file_extension = os.path.splitext(self.path)[1]

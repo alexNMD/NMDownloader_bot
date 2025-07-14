@@ -7,7 +7,10 @@ class DiscordAPI:
     def __init__(self, token):
         self.token = token
         self.base_url = BASE_URL_DISCORD
-        self.headers = {"Authorization": f"Bot {self.token}", "Content-Type": "application/json"}
+        self.headers = {
+            "Authorization": f"Bot {self.token}",
+            "Content-Type": "application/json",
+        }
 
     def reply_with_embed(self, channel_id, message_id, title, description, color):
         """
@@ -56,7 +59,9 @@ class DiscordAPI:
         response_json = response.json()
         return response_json.get("id")
 
-    def edit_embed(self, channel_id, message_id, title=None, description=None, color=None):
+    def edit_embed(
+        self, channel_id, message_id, title=None, description=None, color=None
+    ):
         """
         Modifie un embed dans un message existant dans un canal Discord.
         :param channel_id: ID du canal.

@@ -43,7 +43,9 @@ def dest_file_exists(src_file_path: str) -> bool:
 
     if _series:
         case_match.append(
-            os.path.isfile(os.path.join(_base_directory, _get_sub_directory(_series), _filename))
+            os.path.isfile(
+                os.path.join(_base_directory, _get_sub_directory(_series), _filename)
+            )
         )
 
     return any(case_match)
@@ -68,7 +70,7 @@ def _move_file(src_directory, dest_directory, filename) -> LiteralString | str |
 
 def _get_sub_directory(match: dict) -> str:
     _series_name_formatted = match["series_name"].replace(" ", ".")
-    _season_formatted = f'Saison.{match["season"]}'
+    _season_formatted = f"Saison.{match['season']}"
 
     return os.path.join(_series_name_formatted, _season_formatted)
 

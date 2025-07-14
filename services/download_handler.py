@@ -8,7 +8,13 @@ from urllib.parse import urlparse
 import requests
 
 from apps.celery_app import logger
-from config import NAS_PATH, DISCORD_TOKEN, REFRESH_RATE, BOT_MESSAGES_CHANNEL_ID, CHUNK_SIZE
+from config import (
+    NAS_PATH,
+    DISCORD_TOKEN,
+    REFRESH_RATE,
+    BOT_MESSAGES_CHANNEL_ID,
+    CHUNK_SIZE,
+)
 from services.discord_api import DiscordAPI
 from services.files import FilesHandlerService
 from libs.lib_files import (
@@ -40,7 +46,9 @@ class DownloadHandler:
         except Exception as error:
             raise DownloadException(self, "Unable to retrieve filename") from error
         self.type_dl = (
-            "series" if re.search(r"[Ss]\d{1,2}([Ee]\d{1,2})?", self.file_name) else "films"
+            "series"
+            if re.search(r"[Ss]\d{1,2}([Ee]\d{1,2})?", self.file_name)
+            else "films"
         )
         self.base_download_path = f"{NAS_PATH}/{self.type_dl}"
         self.file_path = os.path.join(self.base_download_path, self.file_name)
@@ -64,7 +72,9 @@ class DownloadHandler:
                     self.total_size = int(response.headers.get("Content-Length", 0))
                     self.download_start_time = time.time()
                     with open(self.file_path, "wb") as file:
-                        with io.BufferedWriter(file, buffer_size=CHUNK_SIZE) as file_buffer:
+                        with io.BufferedWriter(
+                            file, buffer_size=CHUNK_SIZE
+                        ) as file_buffer:
                             self._update_status(DownloadStatus.STARTED)
                             self._handle_chunks(file_buffer, response)
                     self._finish()
@@ -79,7 +89,11 @@ class DownloadHandler:
         raise DownloadRevokeException(self)
 
     def to_dict(self):
-        return {key: value for key, value in self.__dict__.items() if is_json_serializable(value)}
+        return {
+            key: value
+            for key, value in self.__dict__.items()
+            if is_json_serializable(value)
+        }
 
     def _update_status(
         self, status: DownloadStatus, additionnal: str = str(), meta_data=None
@@ -113,7 +127,9 @@ class DownloadHandler:
         )
 
     def _update_task_meta(self, additionnal_meta=None) -> None:
-        _additionnal_meta = additionnal_meta if isinstance(additionnal_meta, dict) else {}
+        _additionnal_meta = (
+            additionnal_meta if isinstance(additionnal_meta, dict) else {}
+        )
         meta = dict(
             download=pickle.dumps(self),
         ) | dict(stats=_additionnal_meta)
@@ -124,7 +140,9 @@ class DownloadHandler:
         _files = [self.file_path]
         _files_handler = FilesHandlerService(self.file_path)
         if _files_handler.is_compressed():
-            self._update_status(DownloadStatus.RUNNING, additionnal="Extraction in progress...")
+            self._update_status(
+                DownloadStatus.RUNNING, additionnal="Extraction in progress..."
+            )
             _files_to_append = _files_handler.handle_archive() or []
             _files.extend(_files_to_append)
 
@@ -167,7 +185,9 @@ class DownloadHandler:
                         downloaded_size, self.total_size, download_speed
                     ),
                     meta_data=dict(
-                        progress=downloaded_size, total=self.total_size, speed=download_speed
+                        progress=downloaded_size,
+                        total=self.total_size,
+                        speed=download_speed,
                     ),
                 )
 
@@ -183,7 +203,9 @@ class DownloadHandler:
 
         progress_bar = get_progress_bar(progress, total)
         remaining_time = (
-            _remaining_time_seconds if _less_than_one_minute else _remaining_time_seconds / 60
+            _remaining_time_seconds
+            if _less_than_one_minute
+            else _remaining_time_seconds / 60
         )
         time_unit = "sec" if _less_than_one_minute else "min"
         speed_in_mb = speed / (1024 * 1024)
