@@ -38,9 +38,11 @@ class FilesHandlerService:
         extracted_files = _list_files_method()
         shutil.unpack_archive(self.path, _parent_directory)
         logger.info("Archive Unpacked")
+
         os.remove(self.path)
         logger.info(f"{self.path} deleted")
-        return extracted_files
+
+        return [os.path.join(_parent_directory, _file) for _file in extracted_files]
 
     def _list_zip_contents(self) -> list:
         with zipfile.ZipFile(self.path, "r") as archive:
