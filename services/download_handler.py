@@ -139,12 +139,11 @@ class DownloadHandler:
     def _finish(self) -> None:
         _files = [self.file_path]
         _files_handler = FilesHandlerService(self.file_path)
-        if _files_handler.is_compressed():
+        if _files_handler.is_compressed:
             self._update_status(
                 DownloadStatus.RUNNING, additionnal="Extraction in progress..."
             )
-            _files_to_append = _files_handler.handle_archive() or []
-            _files.extend(_files_to_append)
+            _files = _files_handler.handle_archive() or []
 
         if self.type_dl in ["series"]:
             for _file in _files:
