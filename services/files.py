@@ -30,19 +30,21 @@ class FilesHandlerService:
         _extension = os.path.splitext(self.path)[1]
         _parent_directory = os.path.dirname(self.path)
 
-        if not (_list_files_method := self.archive_extensions.get(_extension)):
+        if not (list_files_method := self.archive_extensions.get(_extension)):
             logger.warning(f"Unable to find extract method for: {_extension}")
             return None
 
-        logger.info("Unpacking Archive")
-        extracted_files = _list_files_method()
-        shutil.unpack_archive(self.path, _parent_directory)
-        logger.info("Archive Unpacked")
+        logger.info(f"Unpacking Archive: {self.path}")
+        try:
+            shutil.unpack_archive(self.path, _parent_directory)
+        except Exception:
+            raise
+        logger.info(f"Unpacked Archive: {self.path}")
 
         os.remove(self.path)
         logger.info(f"{self.path} deleted")
 
-        return [os.path.join(_parent_directory, _file) for _file in extracted_files]
+        return [os.path.join(_parent_directory, _file) for _file in list_files_method()]
 
     def _list_zip_contents(self) -> list:
         with zipfile.ZipFile(self.path, "r") as archive:
