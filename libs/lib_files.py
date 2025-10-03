@@ -8,10 +8,7 @@ from typing import LiteralString
 
 logger = logging.getLogger("celery")
 
-SERIE_REGEX = (
-    r"^(?P<series_name>[^ ._-]+(?:[ ._-]+[^ ._-]+)*)[ ._-]*S(?P<season>\d{1,2})[ ._-]*E(?P<episode>\d{1,"
-    r"2})[ ._-]+.*\.(?P<extension>mkv|mp4|avi)$"
-)
+SERIE_REGEX = r"^(?P<series_name>[^ ._-]+(?:[ ._-]+[^ ._-]+)*)[ ._-]*S(?P<season>\d{1,2})[ ._-]*E(?P<episode>\d+)[ ._-]+.*\.(?P<extension>mkv|mp4|avi)$"
 
 
 def organize_series(base_directory: str) -> None:
